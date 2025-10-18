@@ -1,0 +1,585 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../model/blocking_rule.dart';
+import '../model/app_block_info.dart';
+import '../model/focus_mode.dart';
+import '../model/app_usage_info.dart';
+import 'app_usage_service.dart';
+import 'real_app_usage_service.dart';
+
+class AppBlockingService {
+  static final AppBlockingService _instance = AppBlockingService._internal();
+  factory AppBlockingService() => _instance;
+  AppBlockingService._internal();
+
+  // Storage keys - must match Android native service keys
+  static const String _rulesKey = 'flutter.blocking_rules';
+  static const String _focusModesKey = 'flutter.focus_modes';
+  static const String _dailyUsageKey = 'flutter.daily_usage_tracking';
+  static const String _sessionUsageKey = 'flutter.session_usage_tracking';
+
+  // In-memory cache
+  List<BlockingRule> _rules = [];
+  List<FocusMode> _focusModes = [];
+  Map<String, Duration> _dailyUsageCache = {};
+  Map<String, Duration> _sessionUsageCache = {};
+  Map<String, DateTime> _sessionStartTimes = {};
+
+  // Stream controllers for real-time updates
+  final StreamController<List<BlockingRule>> _rulesController =
+      StreamController.broadcast();
+  final StreamController<List<FocusMode>> _focusModesController =
+      StreamController.broadcast();
+  final StreamController<Map<String, AppBlockInfo>> _blockStatusController =
+      StreamController.broadcast();
+
+  // Getters for streams
+  Stream<List<BlockingRule>> get rulesStream => _rulesController.stream;
+  Stream<List<FocusMode>> get focusModesStream => _focusModesController.stream;
+  Stream<Map<String, AppBlockInfo>> get blockStatusStream =>
+      _blockStatusController.stream;
+
+  // Services
+  final AppUsageService _mockUsageService = AppUsageService();
+  final RealAppUsageService _realUsageService = RealAppUsageService();
+
+  // Timer for periodic checks
+  Timer? _periodicTimer;
+
+  /// Initialize the service
+  Future<void> initialize() async {
+    debugPrint('🔧 [BLOCKING] Initializing AppBlockingService...');
+
+    await _loadRules();
+    await _loadFocusModes();
+    await _loadUsageTracking();
+
+    // Start periodic monitoring
+    _startPeriodicMonitoring();
+
+    debugPrint('✅ [BLOCKING] AppBlockingService initialized');
+  }
+
+  /// Dispose resources
+  void dispose() {
+    _periodicTimer?.cancel();
+    _rulesController.close();
+    _focusModesController.close();
+    _blockStatusController.close();
+  }
+
+  // ============================================================================
+  // BLOCKING RULES MANAGEMENT
+  // ============================================================================
+
+  /// Get all blocking rules
+  List<BlockingRule> get rules => List.unmodifiable(_rules);
+
+  /// Add a new blocking rule
+  Future<void> addRule(BlockingRule rule) async {
+    debugPrint('➕ [BLOCKING] Adding rule: ${rule.name}');
+
+    _rules.add(rule);
+    await _saveRules();
+    _rulesController.add(_rules);
+
+    // Update block status immediately
+    await _updateBlockStatus();
+  }
+
+  /// Update an existing rule
+  Future<void> updateRule(BlockingRule updatedRule) async {
+    debugPrint('✏️ [BLOCKING] Updating rule: ${updatedRule.name}');
+
+    final index = _rules.indexWhere((rule) => rule.id == updatedRule.id);
+    if (index != -1) {
+      _rules[index] = updatedRule.copyWith(updatedAt: DateTime.now());
+      await _saveRules();
+      _rulesController.add(_rules);
+
+      // Update block status immediately
+      await _updateBlockStatus();
+    }
+  }
+
+  /// Delete a rule
+  Future<void> deleteRule(String ruleId) async {
+    debugPrint('🗑️ [BLOCKING] Deleting rule: $ruleId');
+
+    _rules.removeWhere((rule) => rule.id == ruleId);
+    await _saveRules();
+    _rulesController.add(_rules);
+
+    // Update block status immediately
+    await _updateBlockStatus();
+  }
+
+  /// Toggle rule active status
+  Future<void> toggleRule(String ruleId) async {
+    final rule = _rules.firstWhere((r) => r.id == ruleId);
+    final newStatus =
+        rule.status == RuleStatus.active
+            ? RuleStatus.inactive
+            : RuleStatus.active;
+
+    await updateRule(rule.copyWith(status: newStatus));
+  }
+
+  // ============================================================================
+  // FOCUS MODES MANAGEMENT
+  // ============================================================================
+
+  /// Get all focus modes
+  List<FocusMode> get focusModes => List.unmodifiable(_focusModes);
+
+  /// Get active focus mode
+  FocusMode? get activeFocusMode {
+    try {
+      return _focusModes.firstWhere((mode) => mode.isActive);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Start a focus mode
+  Future<void> startFocusMode(String focusModeId, {Duration? duration}) async {
+    debugPrint('🎯 [BLOCKING] Starting focus mode: $focusModeId');
+
+    // Deactivate all current focus modes
+    for (int i = 0; i < _focusModes.length; i++) {
+      if (_focusModes[i].isActive) {
+        _focusModes[i] = _focusModes[i].copyWith(isActive: false);
+      }
+    }
+
+    // Activate the selected focus mode
+    final index = _focusModes.indexWhere((mode) => mode.id == focusModeId);
+    if (index != -1) {
+      final now = DateTime.now();
+      _focusModes[index] = _focusModes[index].copyWith(
+        isActive: true,
+        startTime: now,
+        endTime: duration != null ? now.add(duration) : null,
+        duration: duration,
+      );
+
+      await _saveFocusModes();
+      _focusModesController.add(_focusModes);
+
+      // Update block status immediately
+      await _updateBlockStatus();
+    }
+  }
+
+  /// Stop the active focus mode
+  Future<void> stopFocusMode() async {
+    debugPrint('⏹️ [BLOCKING] Stopping active focus mode');
+
+    for (int i = 0; i < _focusModes.length; i++) {
+      if (_focusModes[i].isActive) {
+        _focusModes[i] = _focusModes[i].copyWith(isActive: false);
+      }
+    }
+
+    await _saveFocusModes();
+    _focusModesController.add(_focusModes);
+
+    // Update block status immediately
+    await _updateBlockStatus();
+  }
+
+  // ============================================================================
+  // BLOCKING STATUS CHECK
+  // ============================================================================
+
+  /// Check if an app should be blocked
+  Future<AppBlockInfo> getAppBlockStatus(
+    String packageName,
+    String appName,
+  ) async {
+    // Get current usage
+    final dailyUsage = _dailyUsageCache[packageName] ?? Duration.zero;
+    final sessionUsage = _sessionUsageCache[packageName] ?? Duration.zero;
+
+    // Check all active rules
+    final activeRules = <String>[];
+    AppBlockStatus status = AppBlockStatus.allowed;
+    String? blockReason;
+    Duration? dailyLimit;
+    Duration? sessionLimit;
+    bool canBypass = false;
+
+    // Check focus mode first
+    final activeFocus = activeFocusMode;
+    if (activeFocus != null && activeFocus.shouldBlockPackage(packageName)) {
+      status = AppBlockStatus.blocked;
+      blockReason = 'Blocked by ${activeFocus.name}';
+      canBypass = activeFocus.allowEmergency;
+      activeRules.add(activeFocus.id);
+    }
+
+    // Check blocking rules
+    for (final rule in _rules.where((r) => r.isActive)) {
+      if (rule.shouldBlockPackage(packageName)) {
+        activeRules.add(rule.id);
+
+        switch (rule.type) {
+          case BlockingType.allDayBlock:
+          case BlockingType.schedule:
+            status = AppBlockStatus.blocked;
+            blockReason = rule.customBlockMessage ?? 'Blocked by ${rule.name}';
+            canBypass = rule.allowEmergencyBypass;
+            break;
+
+          case BlockingType.timeLimit:
+            dailyLimit = rule.dailyLimit;
+            sessionLimit = rule.sessionLimit;
+
+            // Check daily limit
+            if (rule.dailyLimit != null && dailyUsage >= rule.dailyLimit!) {
+              status = AppBlockStatus.blocked;
+              blockReason = 'Daily time limit reached (${rule.name})';
+              canBypass = rule.allowEmergencyBypass;
+            }
+            // Check session limit
+            else if (rule.sessionLimit != null &&
+                sessionUsage >= rule.sessionLimit!) {
+              status = AppBlockStatus.blocked;
+              blockReason = 'Session time limit reached (${rule.name})';
+              canBypass = rule.allowEmergencyBypass;
+            }
+            // Check warning threshold
+            else if (rule.showUsageWarning && rule.warningThreshold != null) {
+              if (dailyUsage >= rule.warningThreshold!) {
+                status = AppBlockStatus.warning;
+                blockReason = 'Approaching time limit (${rule.name})';
+              }
+            }
+            break;
+
+          case BlockingType.focusMode:
+            // Handled above in focus mode check
+            break;
+        }
+
+        // If already blocked, no need to check further
+        if (status == AppBlockStatus.blocked) break;
+      }
+    }
+
+    return AppBlockInfo(
+      packageName: packageName,
+      appName: appName,
+      status: status,
+      dailyUsage: dailyUsage,
+      dailyLimit: dailyLimit,
+      sessionUsage: sessionUsage,
+      sessionLimit: sessionLimit,
+      activeRuleIds: activeRules,
+      blockReason: blockReason,
+      canBypass: canBypass,
+    );
+  }
+
+  /// Get block status for all apps
+  Future<Map<String, AppBlockInfo>> getAllAppBlockStatus() async {
+    final Map<String, AppBlockInfo> result = {};
+
+    // Get app usage data
+    List<AppUsageInfo> usageData = [];
+    try {
+      usageData = await _realUsageService.getTodayUsage();
+      if (usageData.isEmpty) {
+        usageData = await _mockUsageService.getTodayUsage();
+      }
+    } catch (e) {
+      debugPrint('⚠️ [BLOCKING] Error getting usage data: $e');
+      usageData = await _mockUsageService.getTodayUsage();
+    }
+
+    // Check each app
+    for (final app in usageData) {
+      final blockInfo = await getAppBlockStatus(app.packageName, app.appName);
+      result[app.packageName] = blockInfo;
+    }
+
+    return result;
+  }
+
+  // ============================================================================
+  // USAGE TRACKING
+  // ============================================================================
+
+  /// Start tracking usage for an app
+  void startAppSession(String packageName) {
+    _sessionStartTimes[packageName] = DateTime.now();
+    debugPrint('▶️ [BLOCKING] Started session for $packageName');
+  }
+
+  /// End tracking usage for an app
+  void endAppSession(String packageName) {
+    final startTime = _sessionStartTimes[packageName];
+    if (startTime != null) {
+      final sessionDuration = DateTime.now().difference(startTime);
+
+      // Update session usage
+      _sessionUsageCache[packageName] =
+          (_sessionUsageCache[packageName] ?? Duration.zero) + sessionDuration;
+
+      // Update daily usage
+      _dailyUsageCache[packageName] =
+          (_dailyUsageCache[packageName] ?? Duration.zero) + sessionDuration;
+
+      _sessionStartTimes.remove(packageName);
+
+      debugPrint(
+        '⏹️ [BLOCKING] Ended session for $packageName (${sessionDuration.inMinutes}m)',
+      );
+
+      // Save usage data
+      _saveUsageTracking();
+    }
+  }
+
+  /// Reset daily usage (called at midnight)
+  Future<void> resetDailyUsage() async {
+    debugPrint('🔄 [BLOCKING] Resetting daily usage');
+    _dailyUsageCache.clear();
+    await _saveUsageTracking();
+  }
+
+  /// Reset session usage
+  void resetSessionUsage() {
+    debugPrint('🔄 [BLOCKING] Resetting session usage');
+    _sessionUsageCache.clear();
+    _sessionStartTimes.clear();
+  }
+
+  // ============================================================================
+  // PRIVATE METHODS
+  // ============================================================================
+
+  /// Start periodic monitoring
+  void _startPeriodicMonitoring() {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _updateBlockStatus();
+      _checkFocusModeExpiry();
+    });
+  }
+
+  /// Update block status and notify listeners
+  Future<void> _updateBlockStatus() async {
+    final blockStatus = await getAllAppBlockStatus();
+    _blockStatusController.add(blockStatus);
+  }
+
+  /// Check if focus mode has expired
+  void _checkFocusModeExpiry() {
+    final activeFocus = activeFocusMode;
+    if (activeFocus != null && activeFocus.endTime != null) {
+      if (DateTime.now().isAfter(activeFocus.endTime!)) {
+        stopFocusMode();
+      }
+    }
+  }
+
+  /// Load rules from storage
+  Future<void> _loadRules() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rulesJson = prefs.getString(_rulesKey);
+
+      if (rulesJson != null) {
+        final List<dynamic> rulesList = jsonDecode(rulesJson);
+        _rules = rulesList.map((json) => BlockingRule.fromJson(json)).toList();
+        debugPrint('📥 [BLOCKING] Loaded ${_rules.length} rules');
+      } else {
+        // Load default rules
+        _rules = _getDefaultRules();
+        await _saveRules();
+        debugPrint('📥 [BLOCKING] Loaded default rules');
+      }
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error loading rules: $e');
+      _rules = _getDefaultRules();
+    }
+  }
+
+  /// Save rules to storage
+  Future<void> _saveRules() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rulesJson = jsonEncode(
+        _rules.map((rule) => rule.toJson()).toList(),
+      );
+      await prefs.setString(_rulesKey, rulesJson);
+      debugPrint('💾 [BLOCKING] Saved ${_rules.length} rules');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error saving rules: $e');
+    }
+  }
+
+  /// Load focus modes from storage
+  Future<void> _loadFocusModes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final focusModesJson = prefs.getString(_focusModesKey);
+
+      if (focusModesJson != null) {
+        final List<dynamic> focusModesList = jsonDecode(focusModesJson);
+        _focusModes =
+            focusModesList.map((json) => FocusMode.fromJson(json)).toList();
+      } else {
+        // Load predefined focus modes
+        _focusModes = List.from(FocusMode.predefinedModes);
+        await _saveFocusModes();
+      }
+      debugPrint('📥 [BLOCKING] Loaded ${_focusModes.length} focus modes');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error loading focus modes: $e');
+      _focusModes = List.from(FocusMode.predefinedModes);
+    }
+  }
+
+  /// Save focus modes to storage
+  Future<void> _saveFocusModes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final focusModesJson = jsonEncode(
+        _focusModes.map((mode) => mode.toJson()).toList(),
+      );
+      await prefs.setString(_focusModesKey, focusModesJson);
+      debugPrint('💾 [BLOCKING] Saved ${_focusModes.length} focus modes');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error saving focus modes: $e');
+    }
+  }
+
+  /// Load usage tracking data
+  Future<void> _loadUsageTracking() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load daily usage
+      final dailyUsageJson = prefs.getString(_dailyUsageKey);
+      if (dailyUsageJson != null) {
+        final Map<String, dynamic> dailyUsageMap = jsonDecode(dailyUsageJson);
+        _dailyUsageCache = dailyUsageMap.map(
+          (key, value) => MapEntry(key, Duration(milliseconds: value)),
+        );
+      }
+
+      // Load session usage
+      final sessionUsageJson = prefs.getString(_sessionUsageKey);
+      if (sessionUsageJson != null) {
+        final Map<String, dynamic> sessionUsageMap = jsonDecode(
+          sessionUsageJson,
+        );
+        _sessionUsageCache = sessionUsageMap.map(
+          (key, value) => MapEntry(key, Duration(milliseconds: value)),
+        );
+      }
+
+      debugPrint('📥 [BLOCKING] Loaded usage tracking data');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error loading usage tracking: $e');
+    }
+  }
+
+  /// Save usage tracking data
+  Future<void> _saveUsageTracking() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save daily usage
+      final dailyUsageMap = _dailyUsageCache.map(
+        (key, value) => MapEntry(key, value.inMilliseconds),
+      );
+      await prefs.setString(_dailyUsageKey, jsonEncode(dailyUsageMap));
+
+      // Save session usage
+      final sessionUsageMap = _sessionUsageCache.map(
+        (key, value) => MapEntry(key, value.inMilliseconds),
+      );
+      await prefs.setString(_sessionUsageKey, jsonEncode(sessionUsageMap));
+
+      debugPrint('💾 [BLOCKING] Saved usage tracking data');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error saving usage tracking: $e');
+    }
+  }
+
+  /// Get default blocking rules
+  List<BlockingRule> _getDefaultRules() {
+    return [
+      BlockingRule(
+        id: 'social_media_limit',
+        name: '2h Social Media Limit',
+        description: '⏰ 120 minutes daily',
+        type: BlockingType.timeLimit,
+        targetPackages: [
+          'com.instagram.android',
+          'com.facebook.katana',
+          'com.twitter.android',
+          'com.tiktok',
+          'com.snapchat.android',
+        ],
+        dailyLimit: const Duration(hours: 2),
+        createdAt: DateTime.now(),
+        status: RuleStatus.inactive,
+        showUsageWarning: true,
+        warningThreshold: const Duration(minutes: 90),
+      ),
+      BlockingRule(
+        id: 'evening_focus',
+        name: 'Evening Focus Mode',
+        description: '📅 every day 20:00-23:59',
+        type: BlockingType.schedule,
+        targetPackages: [
+          'com.instagram.android',
+          'com.facebook.katana',
+          'com.twitter.android',
+          'com.tiktok',
+        ],
+        startTime: const TimeOfDay(hour: 20, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 59),
+        createdAt: DateTime.now(),
+        status: RuleStatus.inactive,
+      ),
+      BlockingRule(
+        id: 'work_focus',
+        name: 'Work Focus Mode',
+        description: '📅 weekdays 09:00-17:00',
+        type: BlockingType.schedule,
+        targetPackages: [
+          'com.instagram.android',
+          'com.facebook.katana',
+          'com.twitter.android',
+          'com.tiktok',
+          'com.snapchat.android',
+        ],
+        startTime: const TimeOfDay(hour: 9, minute: 0),
+        endTime: const TimeOfDay(hour: 17, minute: 0),
+        daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+        createdAt: DateTime.now(),
+        status: RuleStatus.inactive,
+      ),
+      BlockingRule(
+        id: 'social_media_block',
+        name: 'Social Media Block',
+        description: '🌙 all day',
+        type: BlockingType.allDayBlock,
+        targetPackages: [
+          'com.instagram.android',
+          'com.facebook.katana',
+          'com.twitter.android',
+        ],
+        createdAt: DateTime.now(),
+        status: RuleStatus.inactive,
+      ),
+    ];
+  }
+}

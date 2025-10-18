@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Brainrot</string>
+    <string name="accessibility_service_description">This service is used to detect when blocked apps are opened and show a blocking screen.</string>
+    <string name="block_message_title">App Blocked</string>
+    <string name="block_message_default">This app is currently blocked by your focus rules.</string>
+    <string name="block_button_ok">OK</string>
+    <string name="block_button_emergency">Emergency Access</string>
+    <string name="notification_channel_name">App Blocking</string>
+    <string name="notification_channel_description">Notifications for app blocking service</string>
+    <string name="notification_service_title">App Blocking Active</string>
+    <string name="notification_service_content">Monitoring and blocking apps according to your rules</string>
+</resources>

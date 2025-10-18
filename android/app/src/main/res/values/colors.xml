@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="block_overlay_background">#FFE4B5</color>
+    <color name="block_primary">#FF6B35</color>
+    <color name="block_text">#333333</color>
+    <color name="block_button">#FF6B35</color>
+    <color name="block_button_text">#FFFFFF</color>
+</resources>

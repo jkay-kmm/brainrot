@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
-import 'stats_screen.dart';
+import 'blocking_screen.dart';
 import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const CalendarScreen(),
-    const StatsScreen(),
+    const BlockingScreen(),
     const SettingsScreen(),
   ];
 
@@ -26,8 +27,9 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
+        height: 80, // Tăng chiều cao từ mặc định (~56) lên 80
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFFFE4B5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -36,47 +38,94 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.orange,
-          unselectedItemColor: Colors.grey,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: 8,
+            bottom: 8,
+          ), // Thêm padding để cân bằng
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: Colors.orange,
+            unselectedItemColor: Colors.black,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+            items: [
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/images/home.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/home.svg',
+                  width: 28,
+                  height: 28,
+                  colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
+                ),
+                label: 'home',
+              ),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/images/calendar.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/calendar.svg',
+                  width: 28,
+                  height: 28,
+                  colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
+                ),
+                label: 'stats',
+              ),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/images/block.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/block.svg',
+                  width: 28,
+                  height: 28,
+                  colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
+                ),
+                label: 'blocking',
+              ),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/images/setting.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/setting.svg',
+                  width: 28,
+                  height: 28,
+                  colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
+                ),
+                label: 'settings',
+              ),
+            ],
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-          ),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              activeIcon: Icon(Icons.home, size: 28),
-              label: 'home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today),
-              activeIcon: Icon(Icons.calendar_today, size: 28),
-              label: 'stats',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.block),
-              activeIcon: Icon(Icons.block, size: 28),
-              label: 'blocking',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              activeIcon: Icon(Icons.settings, size: 28),
-              label: 'settings',
-            ),
-          ],
         ),
       ),
     );

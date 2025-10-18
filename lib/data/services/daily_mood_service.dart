@@ -29,11 +29,9 @@ class DailyMoodService {
       final jsonString = json.encode(moodData);
       await prefs.setString(_dailyMoodKey, jsonString);
 
-      print(
-        'Saved mood for $dateKey: score=$score, image=${_getMoodImageFromScore(score)}',
-      );
+   
     } catch (e) {
-      print('Error saving daily mood: $e');
+    
     }
   }
 
@@ -44,7 +42,7 @@ class DailyMoodService {
       final moodData = await getAllMoodData();
       return moodData[dateKey];
     } catch (e) {
-      print('Error getting daily mood: $e');
+
       return null;
     }
   }
@@ -60,7 +58,7 @@ class DailyMoodService {
       }
       return {};
     } catch (e) {
-      print('Error getting all mood data: $e');
+    
       return {};
     }
   }

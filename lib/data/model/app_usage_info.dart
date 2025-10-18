@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 class AppUsageInfo {
   final String packageName;
   final String appName;
   final Duration usage;
   final DateTime startTime;
   final DateTime endTime;
+  final Uint8List? iconBytes; // Thêm field icon
 
   AppUsageInfo({
     required this.packageName,
@@ -11,6 +14,7 @@ class AppUsageInfo {
     required this.usage,
     required this.startTime,
     required this.endTime,
+    this.iconBytes, // Optional icon bytes
   });
 
   // Format duration to readable string
@@ -52,4 +56,26 @@ class AppUsageInfo {
   int get hashCode {
     return packageName.hashCode ^ appName.hashCode ^ usage.hashCode;
   }
+
+  /// Copy method để update icon hoặc other fields
+  AppUsageInfo copyWith({
+    String? packageName,
+    String? appName,
+    Duration? usage,
+    DateTime? startTime,
+    DateTime? endTime,
+    Uint8List? iconBytes,
+  }) {
+    return AppUsageInfo(
+      packageName: packageName ?? this.packageName,
+      appName: appName ?? this.appName,
+      usage: usage ?? this.usage,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      iconBytes: iconBytes ?? this.iconBytes,
+    );
+  }
+
+  /// Check if app has icon
+  bool get hasIcon => iconBytes != null;
 }

@@ -4,10 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/model/app_usage_info.dart';
 import '../data/services/real_app_usage_service.dart';
 import '../data/services/daily_mood_service.dart';
+import '../data/services/app_icon_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final RealAppUsageService _appUsageService = RealAppUsageService();
   final DailyMoodService _moodService = DailyMoodService();
+  final AppIconService _iconService = AppIconService();
 
   List<AppUsageInfo> _appUsageList = [];
   bool _isLoading = false;
@@ -111,7 +113,7 @@ class HomeViewModel extends ChangeNotifier {
       await prefs.setString('last_reset_date', today.toIso8601String());
       await prefs.setDouble('current_score', _currentScore);
 
-      print('🌅 New day detected! Score reset to 100');
+
       notifyListeners();
     } else {
       // Load saved score for today
@@ -133,6 +135,47 @@ class HomeViewModel extends ChangeNotifier {
 
     // Save mood state for today
     await _moodService.saveDailyMood(DateTime.now(), _currentScore);
+  }
+
+  /// Load icons cho tất cả apps
+  Future<void> loadAppIcons() async {
+    if (_appUsageList.isEmpty) {
+  
+      return;
+    }
+
+    try {
+      
+
+      // Test with just one app first
+      final testPackage = _appUsageList.first.packageName;
+    
+
+      final testIcon = await _iconService.getAppIcon(testPackage);
+      if (testIcon != null) {
+      
+      } else {
+    
+      }
+
+      final packageNames = _appUsageList.map((app) => app.packageName).toList();
+     
+      final iconsMap = await _iconService.getMultipleAppIcons(packageNames);
+    
+      // Update apps with icons
+      // ignore: unused_local_variable
+      int successCount = 0;
+      _appUsageList =
+          _appUsageList.map((app) {
+            final iconBytes = iconsMap[app.packageName];
+            if (iconBytes != null) successCount++;
+            return app.copyWith(iconBytes: iconBytes);
+          }).toList();
+      notifyListeners();
+    } catch (e) {
+
+      // Don't throw error, just continue without icons
+    }
   }
 
   /// Load today's app usage data
@@ -176,6 +219,10 @@ class HomeViewModel extends ChangeNotifier {
       // Load usage data
       final usageList = await loadFunction();
       _appUsageList = usageList;
+
+      // Load icons after getting usage data
+    
+      await loadAppIcons();
 
       // Calculate total usage
       _totalUsage = Duration.zero;

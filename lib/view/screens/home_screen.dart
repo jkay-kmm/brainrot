@@ -1,9 +1,12 @@
+import 'package:brainrot/widgets/calendar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../view_model/app_view_model.dart';
 import '../../view_model/home_view_model.dart';
 import '../../data/model/app_usage_info.dart';
+import '../../core/routes/app_routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,34 +41,40 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         backgroundColor: Color(0xFFFFE4B5),
         appBar: AppBar(
+          toolbarHeight: 0,
           title: const Text(
             'brainrot',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           actions: [
-            Consumer<AppViewModel>(
-              builder: (context, appViewModel, child) {
-                return IconButton(
-                  icon: Icon(
-                    appViewModel.themeMode == ThemeMode.dark
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                  ),
-                  onPressed: () => appViewModel.toggleTheme(),
-                );
-              },
+            // Today Calendar Button
+            TextButton.icon(
+              onPressed: () => _showTodayCalendar(context),
+              icon: const Icon(
+                Icons.calendar_today,
+                color: Colors.black,
+                size: 20,
+              ),
+              label: const Text(
+                'today',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                backgroundColor: Colors.white.withOpacity(0.8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
-            // Consumer<HomeViewModel>(
-            //   builder: (context, homeViewModel, child) {
-            //     return IconButton(
-            //       icon: const Icon(Icons.refresh),
-            //       onPressed:
-            //           homeViewModel.isLoading
-            //               ? null
-            //               : () => homeViewModel.refresh(),
-            //     );
-            //   },
-            // ),
+            const SizedBox(width: 16),
           ],
         ),
         body: Consumer<HomeViewModel>(
@@ -155,113 +164,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // void _showUsageActions(BuildContext context, HomeViewModel homeViewModel) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return Container(
-  //         padding: const EdgeInsets.all(20),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Text(
-  //               'Usage Actions',
-  //               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //             const SizedBox(height: 20),
-  //             ListTile(
-  //               leading: const Icon(Icons.refresh, color: Colors.blue),
-  //               title: const Text('Refresh Data'),
-  //               subtitle: const Text('Get latest usage information'),
-  //               onTap: () {
-  //                 Navigator.of(context).pop();
-  //                 homeViewModel.refresh();
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.bar_chart, color: Colors.green),
-  //               title: const Text('View Statistics'),
-  //               subtitle: const Text('See detailed usage stats'),
-  //               onTap: () {
-  //                 Navigator.of(context).pop();
-  //                 _showUsageStats(context, homeViewModel);
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.warning, color: Colors.orange),
-  //               title: const Text('Usage Warning'),
-  //               subtitle: Text(homeViewModel.hasExcessiveScreenTime
-  //                   ? 'You have excessive screen time today!'
-  //                   : 'Your screen time looks healthy'),
-  //               onTap: () {
-  //                 Navigator.of(context).pop();
-  //                 _showUsageWarning(context, homeViewModel);
-  //               },
-  //             ),
-  //             const SizedBox(height: 10),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+  void _showTodayCalendar(BuildContext context) {
+    TodayCalendarDialog.show(context, onDateSelected: _onDateSelected);
+  }
 
-  // void _showUsageStats(BuildContext context, HomeViewModel homeViewModel) {
-  //   final stats = homeViewModel.usageStats;
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Usage Statistics'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Text('Total Apps: ${stats['totalApps']}'),
-  //             const SizedBox(height: 8),
-  //             Text('Total Usage: ${homeViewModel.formattedTotalUsage}'),
-  //             const SizedBox(height: 8),
-  //             Text('Category: ${homeViewModel.screenTimeCategory}'),
-  //             const SizedBox(height: 8),
-  //             if (stats['mostUsedApp'] != null)
-  //               Text('Most Used: ${(stats['mostUsedApp'] as AppUsageInfo).appName}'),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('Close'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  void _onDateSelected(DateTime date) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Selected date: ${_formatSelectedDate(date)}'),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
-  // void _showUsageWarning(BuildContext context, HomeViewModel homeViewModel) {
-  //   final isExcessive = homeViewModel.hasExcessiveScreenTime;
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Text(isExcessive ? 'Screen Time Warning' : 'Great Job!'),
-  //         content: Text(
-  //           isExcessive
-  //               ? 'You\'ve spent ${homeViewModel.formattedTotalUsage} on your phone today. Consider taking a break!'
-  //               : 'Your screen time of ${homeViewModel.formattedTotalUsage} looks healthy. Keep it up!',
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  String _formatSelectedDate(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+
+    final dayName = days[date.weekday - 1];
+    final monthName = months[date.month - 1];
+
+    return '$dayName, $monthName ${date.day}, ${date.year}';
+  }
 }
 
 Widget _buildWelcomeSection(BuildContext context, HomeViewModel homeViewModel) {
@@ -320,19 +266,6 @@ Widget _buildBrainHealthCalculation(
           ),
         ),
       ),
-
-      // Mood description
-      // Text(
-      //   _getMoodDescription(finalScore),
-      //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-      //     color: _getScoreColor(finalScore),
-      //     fontWeight: FontWeight.w500,
-      //   ),
-      //   textAlign: TextAlign.center,
-      // ),
-      // const SizedBox(height: 16),
-
-      // Large score display
       RichText(
         text: TextSpan(
           children: [
@@ -402,33 +335,7 @@ Widget _buildBrainHealthCalculation(
             ),
             textAlign: TextAlign.center,
           ),
-          // Container(
-          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          //   decoration: BoxDecoration(
-          //     color: _getScoreColor(finalScore).withOpacity(0.1),
-          //     borderRadius: BorderRadius.circular(20),
-          //     border: Border.all(color: _getScoreColor(finalScore), width: 2),
-          //   ),
-          //   child: Row(
-          //     mainAxisSize: MainAxisSize.min,
-          //     children: [
-          //       Icon(
-          //         _getHealthIcon(finalScore),
-          //         color: _getScoreColor(finalScore),
-          //         size: 20,
-          //       ),
-          //       const SizedBox(width: 8),
-          //       Text(
-          //         _getHealthStatus(finalScore),
-          //         style: TextStyle(
-          //           color: _getScoreColor(finalScore),
-          //           fontWeight: FontWeight.bold,
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          // const SizedBox(width: 8),
+          SizedBox(width: 8),
           GestureDetector(
             onTap:
                 () => _showHealthCalculationDetails(
@@ -562,15 +469,6 @@ void _showHealthCalculationDetails(
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        // Text(
-                        //   _getMoodDescription(finalScore),
-                        //   style: Theme.of(
-                        //     context,
-                        //   ).textTheme.bodyMedium?.copyWith(
-                        //     color: _getScoreColor(finalScore),
-                        //     fontWeight: FontWeight.w500,
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
@@ -724,156 +622,9 @@ void _showHealthCalculationDetails(
                       ),
 
                       const SizedBox(height: 24),
-
-                      // Reset info
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue[200]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.refresh,
-                                  color: Colors.blue[600],
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Daily Reset:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue[800],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Your brain health score automatically resets to 100 points every day at midnight. This gives you a fresh start each day to maintain healthy screen time habits.',
-                              style: TextStyle(color: Colors.blue[700]),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Mood explanation section
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.purple[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.purple[200]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.psychology,
-                                  color: Colors.purple[600],
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Mood Indicators:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.purple[800],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '😊 100-80: Happy & Healthy\n'
-                              '🤔 79-60: Thoughtful & Aware\n'
-                              '😰 59-30: Stressed & Concerned\n'
-                              '😴 29-0: Tired & Overwhelmed',
-                              style: TextStyle(color: Colors.purple[700]),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Tips section
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green[200]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.lightbulb,
-                                  color: Colors.green[600],
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Tips to improve your score:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green[800],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '• Keep screen time under 2 hours daily\n'
-                              '• Take regular breaks every 30 minutes\n'
-                              '• Use focus modes for important tasks\n'
-                              '• Try digital detox periods\n'
-                              '• Set app time limits',
-                              style: TextStyle(color: Colors.green[700]),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        homeViewModel.forceResetScore();
-                      },
-                      child: const Text('Reset Score'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Got it!'),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -881,22 +632,6 @@ void _showHealthCalculationDetails(
       );
     },
   );
-}
-
-String _getHealthStatus(double score) {
-  if (score >= 90) return 'Excellent';
-  if (score >= 80) return 'Great';
-  if (score >= 70) return 'Good';
-  if (score >= 60) return 'Fair';
-  if (score >= 50) return 'Poor';
-  return 'Critical';
-}
-
-IconData _getHealthIcon(double score) {
-  if (score >= 80) return Icons.sentiment_very_satisfied;
-  if (score >= 60) return Icons.sentiment_satisfied;
-  if (score >= 40) return Icons.sentiment_neutral;
-  return Icons.sentiment_dissatisfied;
 }
 
 Widget _buildCalculationRow(
@@ -986,8 +721,6 @@ Widget _buildStatItem(
 ) {
   return Column(
     children: [
-      // Icon(icon, size: 24, color: Theme.of(context).primaryColor),
-      // const SizedBox(height: 4),
       Text(
         label,
         style: Theme.of(
@@ -1042,34 +775,11 @@ Widget _buildTopAppsSection(BuildContext context, HomeViewModel homeViewModel) {
   );
 }
 
-// Widget _buildAllAppsSection(BuildContext context, HomeViewModel homeViewModel) {
-//   if (homeViewModel.appUsageList.isEmpty) {
-//     return const SizedBox.shrink();
-//   }
-
-//   return Column(
-//     crossAxisAlignment: CrossAxisAlignment.start,
-//     children: [
-//       Text(
-//         'All Apps',
-//         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-//           fontWeight: FontWeight.bold,
-//         ),
-//       ),
-//       const SizedBox(height: 12),
-//       ...homeViewModel.appUsageList.map(
-//         (app) => _buildAppUsageTile(context, app, homeViewModel),
-//       ),
-//     ],
-//   );
-// }
-
 Widget _buildAppUsageTile(
   BuildContext context,
   AppUsageInfo app,
   HomeViewModel homeViewModel,
 ) {
-  final percentage = homeViewModel.getUsagePercentage(app);
   final color = homeViewModel.getUsageColor(app);
 
   return Padding(
@@ -1083,7 +793,7 @@ Widget _buildAppUsageTile(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(_getAppIcon(app.packageName), color: color, size: 24),
+          child: _buildAppIcon(app, color),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -1097,14 +807,6 @@ Widget _buildAppUsageTile(
                   fontSize: 14,
                 ),
               ),
-              // const SizedBox(height: 4),
-
-              // const SizedBox(height: 8),
-              // LinearProgressIndicator(
-              //   value: percentage / 100,
-              //   backgroundColor: Colors.grey[300],
-              //   valueColor: AlwaysStoppedAnimation<Color>(color),
-              // ),
             ],
           ),
         ),
@@ -1119,6 +821,32 @@ Widget _buildAppUsageTile(
       ],
     ),
   );
+}
+
+/// Build app icon widget - real icon or fallback to material icon
+Widget _buildAppIcon(AppUsageInfo app, Color fallbackColor) {
+  if (app.hasIcon && app.iconBytes != null) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.memory(
+        app.iconBytes!,
+        width: 32,
+        height: 32,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to material icon if image fails
+          return Icon(
+            _getAppIcon(app.packageName),
+            color: fallbackColor,
+            size: 24,
+          );
+        },
+      ),
+    );
+  } else {
+    // Fallback to material icon
+    return Icon(_getAppIcon(app.packageName), color: fallbackColor, size: 24);
+  }
 }
 
 IconData _getAppIcon(String packageName) {
@@ -1147,11 +875,3 @@ String _getMoodImage(double score) {
   if (score >= 30) return 'assets/images/cangthang.png'; // 59-30: Căng thẳng
   return 'assets/images/buonngu.png'; // 29-0: Buồn ngủ
 }
-
-// Get mood description based on score
-// String _getMoodDescription(double score) {
-//   if (score >= 80) return 'Excellent! You\'re doing great! 😊';
-//   if (score >= 60) return 'Good, but room for improvement 🤔';
-//   if (score >= 30) return 'Be careful with your screen time 😰';
-//   return 'Time for a digital detox! 😴';
-// }

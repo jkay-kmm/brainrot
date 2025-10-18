@@ -11,12 +11,12 @@ class RealAppUsageService {
   /// Check if usage access permission is granted
   Future<bool> hasUsagePermission() async {
     try {
-      debugPrint('🔍 [BRAINROT] Checking usage permission...');
+    
       final bool? hasPermission = await _channel.invokeMethod('hasUsagePermission');
-      debugPrint('🔍 [BRAINROT] Usage permission result: $hasPermission');
+
       return hasPermission ?? false;
     } catch (e) {
-      debugPrint('❌ [BRAINROT] Error checking usage permission: $e');
+
       return false;
     }
   }
@@ -24,12 +24,12 @@ class RealAppUsageService {
   /// Request usage access permission
   Future<bool> requestUsagePermission() async {
     try {
-      debugPrint('📱 [BRAINROT] Requesting usage permission...');
+   
       final bool? granted = await _channel.invokeMethod('requestUsagePermission');
-      debugPrint('📱 [BRAINROT] Usage permission granted: $granted');
+    
       return granted ?? false;
     } catch (e) {
-      debugPrint('❌ [BRAINROT] Error requesting usage permission: $e');
+    
       return false;
     }
   }
@@ -37,19 +37,18 @@ class RealAppUsageService {
   /// Get app usage data for today FROM REAL DIGITAL WELLBEING
   Future<List<AppUsageInfo>> getTodayUsage() async {
     try {
-      debugPrint('🔄 [BRAINROT] Fetching REAL usage data from Digital Wellbeing...');
+    
       
       // Get current time info for debugging
       final timeInfo = await _channel.invokeMethod('getCurrentTimeInfo');
-      debugPrint('🕐 [BRAINROT] Current time info: $timeInfo');
+    
       
       // ALWAYS try to get real data first, regardless of permission
       final List<dynamic>? rawData = await _channel.invokeMethod('getUsageStats');
-      debugPrint('🔄 [BRAINROT] Native method response: $rawData');
+     
       
       if (rawData != null && rawData.isNotEmpty) {
-        debugPrint('✅ [BRAINROT] Got ${rawData.length} real apps from Digital Wellbeing');
-        
+       
         // Convert raw data to AppUsageInfo objects
         List<AppUsageInfo> usageList = rawData.map((data) {
           final Map<String, dynamic> appData = Map<String, dynamic>.from(data);
@@ -69,29 +68,28 @@ class RealAppUsageService {
         // Sort by usage time (highest first)
         usageList.sort((a, b) => b.usage.compareTo(a.usage));
 
-        debugPrint('📊 [BRAINROT] Processed ${usageList.length} apps with meaningful usage');
+      
         for (var app in usageList.take(5)) {
           debugPrint('   ${app.appName}: ${app.formattedUsage}');
         }
 
         return usageList;
       } else {
-        debugPrint('⚠️ [BRAINROT] No real usage data returned, checking permission...');
+      
         
         // Check permission
         bool hasPermission = await hasUsagePermission();
         if (!hasPermission) {
-          debugPrint('⚠️ [BRAINROT] No usage permission, requesting...');
+        
           await requestUsagePermission();
         }
         
-        debugPrint('🔄 [BRAINROT] Using fallback data (not real usage stats)');
+       
         return _getFallbackData();
       }
       
     } catch (e) {
-      debugPrint('❌ [BRAINROT] Error getting real usage data: $e');
-      debugPrint('🔄 [BRAINROT] Using fallback data due to error');
+     
       return _getFallbackData();
     }
   }
@@ -99,18 +97,18 @@ class RealAppUsageService {
   /// Force refresh usage data (clears cache)
   Future<List<AppUsageInfo>> refreshTodayUsage() async {
     try {
-      debugPrint('🔄 [BRAINROT] FORCE REFRESHING usage data...');
+   
       
       // Get current time info for debugging
       final timeInfo = await _channel.invokeMethod('getCurrentTimeInfo');
-      debugPrint('🕐 [BRAINROT] Force refresh at: $timeInfo');
+    
       
       // Call refresh method that clears cache
       final List<dynamic>? rawData = await _channel.invokeMethod('refreshUsageStats');
-      debugPrint('🔄 [BRAINROT] Force refresh response: $rawData');
+   
       
       if (rawData != null && rawData.isNotEmpty) {
-        debugPrint('✅ [BRAINROT] Got ${rawData.length} FRESH apps from Digital Wellbeing');
+       
         
         // Convert raw data to AppUsageInfo objects
         List<AppUsageInfo> usageList = rawData.map((data) {
@@ -129,19 +127,19 @@ class RealAppUsageService {
         usageList = usageList.where((app) => app.usage.inSeconds >= 30).toList();
         usageList.sort((a, b) => b.usage.compareTo(a.usage));
 
-        debugPrint('📊 [BRAINROT] FRESH processed ${usageList.length} apps');
+       
         for (var app in usageList.take(5)) {
-          debugPrint('   ${app.appName}: ${app.formattedUsage}');
+          ('   ${app.appName}: ${app.formattedUsage}');
         }
 
         return usageList;
       } else {
-        debugPrint('⚠️ [BRAINROT] No fresh data, falling back...');
+      
         return _getFallbackData();
       }
       
     } catch (e) {
-      debugPrint('❌ [BRAINROT] Error force refreshing: $e');
+      
       return _getFallbackData();
     }
   }
