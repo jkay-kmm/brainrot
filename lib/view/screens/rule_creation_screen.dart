@@ -567,3 +567,4 @@ class _RuleCreationScreenState extends State<RuleCreationScreen> {
     );
   }
 }
+

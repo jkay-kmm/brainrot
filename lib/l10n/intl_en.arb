@@ -1,0 +1,19 @@
+{
+  "settings": "Settings",
+  "screenTimeGoal": "Screen Time Goal",
+  "hours": "hours",
+  "language": "Language",
+  "changeLanguage": "Change app language",
+  "english": "English",
+  "vietnamese": "Tiếng Việt",
+  "supportFeedback": "Support & Feedback",
+  "helpSupport": "Help & Support",
+  "featureRequests": "Feature Requests",
+  "leaveReview": "Leave a Review",
+  "contactUs": "Contact Us",
+  "legal": "Legal",
+  "privacyPolicy": "Privacy Policy",
+  "darkMode": "Dark Mode",
+  "switchTheme": "Switch between light and dark theme",
+  "appVersion": "App Version 1.0.0"
+}

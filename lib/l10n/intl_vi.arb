@@ -1,0 +1,19 @@
+{
+  "settings": "Cài đặt",
+  "screenTimeGoal": "Mục tiêu thời gian màn hình",
+  "hours": "giờ",
+  "language": "Ngôn ngữ",
+  "changeLanguage": "Thay đổi ngôn ngữ ứng dụng",
+  "english": "English",
+  "vietnamese": "Tiếng Việt",
+  "supportFeedback": "Hỗ trợ & Phản hồi",
+  "helpSupport": "Trợ giúp & Hỗ trợ",
+  "featureRequests": "Yêu cầu tính năng",
+  "leaveReview": "Đánh giá ứng dụng",
+  "contactUs": "Liên hệ chúng tôi",
+  "legal": "Pháp lý",
+  "privacyPolicy": "Chính sách bảo mật",
+  "darkMode": "Chế độ tối",
+  "switchTheme": "Chuyển đổi giữa giao diện sáng và tối",
+  "appVersion": "Phiên bản ứng dụng 1.0.0"
+}

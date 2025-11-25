@@ -1,7 +1,7 @@
 # 🧠 Brainrot - Digital Wellbeing & App Blocking
 
 <div align="center">
-  <img src="assets/images/logo.png" alt="Brainrot Logo" width="200"/>
+  <img src="assets/images/logo1.png" alt="Brainrot Logo" width="200"/>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.7.0-blue.svg)](https://flutter.dev)
 [![Android](https://img.shields.io/badge/Android-6.0+-green.svg)](https://www.android.com)
@@ -15,11 +15,6 @@
   <img src="assets/images/11.png" alt="Feature 2" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
   <img src="assets/images/12.png" alt="Feature 3" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
   <img src="assets/images/13.png" alt="Feature 4" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <img src="assets/images/14.png" alt="Feature 5" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <img src="assets/images/15.png" alt="Feature 6" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <img src="assets/images/16.png" alt="Feature 7" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <img src="assets/images/17.png" alt="Feature 8" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <img src="assets/images/18.png" alt="Feature 9" style="height: 200px; width: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 </p>
 
 ## 📱 Giới Thiệu
@@ -195,13 +190,7 @@ Dự án này được cấp phép theo giấy phép MIT - xem file [LICENSE](LI
 
 ## 📞 Liên Hệ
 
-- Email: your-email@example.com
-- GitHub: [@your-username](https://github.com/your-username)
-
-## 🙏 Credits
-
-- Icons: [Material Icons](https://fonts.google.com/icons)
-- Inspiration: Digital Wellbeing, Freedom, Forest
+- Email: nguyenthanhtrungtt20@gmail.com
 
 ---
 

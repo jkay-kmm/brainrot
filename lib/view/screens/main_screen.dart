@@ -25,9 +25,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: SafeArea(
+        top: false, // Allow content to extend to top of screen
+        bottom: false,
+        child: _screens[_currentIndex],
+      ),
       bottomNavigationBar: Container(
-        height: 80, // Tăng chiều cao từ mặc định (~56) lên 80
+        height: 100, // Tăng chiều cao từ mặc định (~56) lên 80
         decoration: BoxDecoration(
           color: Color(0xFFFFE4B5),
           boxShadow: [
