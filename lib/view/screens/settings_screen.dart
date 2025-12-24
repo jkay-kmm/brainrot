@@ -41,52 +41,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.timer, color: Colors.blue, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${_screenTimeGoal.toStringAsFixed(1)} ${t.hours ?? "hours"}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Slider(
-                    value: _screenTimeGoal,
-                    min: 0.5,
-                    max: 8.0,
-                    divisions: 15,
-                    label: '${_screenTimeGoal.toStringAsFixed(1)}h',
-                    onChanged: (value) {
-                      setState(() {
-                        _screenTimeGoal = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-
             const SizedBox(height: 30),
             Consumer<AppViewModel>(
               builder: (context, appVM, _) {
@@ -99,14 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.teal.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.language, color: Colors.teal, size: 20),
-                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -147,85 +93,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            _buildSettingsItem(Icons.help_outline, t.helpSupport, Colors.blue,
+            _buildSettingsItem( t.helpSupport, Colors.blue,
                     () => _showComingSoon(context, t.helpSupport)),
             const SizedBox(height: 10),
-            _buildSettingsItem(Icons.lightbulb_outline, t.featureRequests, Colors.orange,
+            _buildSettingsItem(t.featureRequests, Colors.orange,
                     () => _showComingSoon(context, t.featureRequests)),
             const SizedBox(height: 10),
-            _buildSettingsItem(Icons.star_outline, t.leaveReview, Colors.amber,
+            _buildSettingsItem( t.leaveReview, Colors.amber,
                     () => _showComingSoon(context, t.leaveReview)),
             const SizedBox(height: 10),
-            _buildSettingsItem(Icons.email_outlined, t.contactUs, Colors.green,
+            _buildSettingsItem( t.contactUs, Colors.green,
                     () => _showComingSoon(context, t.contactUs)),
-
-            const SizedBox(height: 30),
-
-            // ------- Legal -------
-            Text(
-              t.legal,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
             const SizedBox(height: 15),
-            _buildSettingsItem(Icons.privacy_tip_outlined, t.privacyPolicy, Colors.purple,
+            _buildSettingsItem(t.privacyPolicy, Colors.purple,
                     () => _showComingSoon(context, t.privacyPolicy)),
-
             const SizedBox(height: 30),
-
-            // ------- Theme toggle (giữ nguyên, chỉ đổi text sang t.* nếu muốn) -------
-            Consumer<AppViewModel>(
-              builder: (context, appViewModel, child) {
-                return Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.indigo.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          appViewModel.themeMode == ThemeMode.dark
-                              ? Icons.dark_mode
-                              : Icons.light_mode,
-                          color: Colors.indigo,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.darkMode,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              t.switchTheme,
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: appViewModel.themeMode == ThemeMode.dark,
-                        onChanged: (value) => appViewModel.toggleTheme(),
-                        activeColor: Colors.indigo,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            // Consumer<AppViewModel>(
+            //   builder: (context, appViewModel, child) {
+            //     return Container(
+            //       padding: const EdgeInsets.all(20),
+            //       decoration: BoxDecoration(
+            //         color: Colors.white.withOpacity(0.8),
+            //         borderRadius: BorderRadius.circular(15),
+            //       ),
+            //       child: Row(
+            //         children: [
+            //           Container(
+            //             padding: const EdgeInsets.all(8),
+            //             decoration: BoxDecoration(
+            //               color: Colors.indigo.withOpacity(0.1),
+            //               borderRadius: BorderRadius.circular(8),
+            //             ),
+            //             child: Icon(
+            //               appViewModel.themeMode == ThemeMode.dark
+            //                   ? Icons.dark_mode
+            //                   : Icons.light_mode,
+            //               color: Colors.indigo,
+            //               size: 20,
+            //             ),
+            //           ),
+            //           const SizedBox(width: 12),
+            //           Expanded(
+            //             child: Column(
+            //               crossAxisAlignment: CrossAxisAlignment.start,
+            //               children: [
+            //                 Text(
+            //                   t.darkMode,
+            //                   style: const TextStyle(
+            //                     fontSize: 16,
+            //                     fontWeight: FontWeight.w600,
+            //                   ),
+            //                 ),
+            //                 Text(
+            //                   t.switchTheme,
+            //                   style: const TextStyle(fontSize: 14, color: Colors.grey),
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //           Switch(
+            //             value: appViewModel.themeMode == ThemeMode.dark,
+            //             onChanged: (value) => appViewModel.toggleTheme(),
+            //             activeColor: Colors.indigo,
+            //           ),
+            //         ],
+            //       ),
+            //     );
+            //   },
+            // ),
 
             const SizedBox(height: 30),
 
@@ -242,7 +177,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSettingsItem(
-      IconData icon,
       String title,
       Color color,
       VoidCallback onTap,
@@ -257,14 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
+
             const SizedBox(width: 12),
             Expanded(
               child: Text(

@@ -39,6 +39,7 @@ dependencies:
   # Utilities
   equatable: ^2.0.5
   uuid: ^4.3.3
+  lottie: ^3.3.1
 
 dev_dependencies:
   flutter_test:
@@ -57,9 +58,10 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-  # generate: true   # <— GỠ dòng này để tránh xung đột với Flutter Intl
+
   assets:
     - assets/images/
+    - assets/animations/
 
 flutter_intl:
   enabled: true

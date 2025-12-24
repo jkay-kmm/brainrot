@@ -39,12 +39,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         backgroundColor: const Color(0xFFFFE4B5),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => _showHelpDialog(context),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.help_outline),
+        //     onPressed: () => _showHelpDialog(context),
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         child: ConstrainedBox(

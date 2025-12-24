@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../core/routes/app_routes.dart';
 
@@ -35,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed( Duration(milliseconds: 2500));
     if (mounted) {
       context.go(AppRoutes.home);
     }
@@ -50,36 +51,37 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: const Color(0xFFFFE4B5),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.psychology,
-                size: 120,
-                color: Colors.white,
+              Lottie.asset(
+                'assets/animations/splash1.json',
+                width: 860,
+                height: 560,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 24),
-              Text(
-                'Brainrot',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
+              // const SizedBox(height: 24),
+              // Text(
+              //   'Brainrot',
+              //   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              //     color: Colors.white,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
+              // const SizedBox(height: 16),
               Text(
                 'Loading...',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white70,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 32),
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
               ),
             ],
           ),
