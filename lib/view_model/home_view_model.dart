@@ -31,9 +31,9 @@ class HomeViewModel extends ChangeNotifier {
     final minutes = _totalUsage.inMinutes.remainder(60);
 
     if (hours > 0) {
-      return '${hours}h ${minutes}m';
+      return '${hours}giờ ${minutes} phút';
     } else {
-      return '${minutes}m';
+      return '${minutes} phút';
     }
   }
 
@@ -58,15 +58,6 @@ class HomeViewModel extends ChangeNotifier {
     if (minutes < 180) return 'Heavy';
     return 'Excessive';
   }
-
-  // Get screen time category color
-  // Color get screenTimeCategoryColor {
-  //   final minutes = _totalUsage.inMinutes;
-  //   if (minutes < 60) return Colors.green;
-  //   if (minutes < 120) return Colors.orange;
-  //   if (minutes < 180) return Colors.red;
-  //   return Colors.purple;
-  // }
 
   // Calculate brain health score based on current usage
   double calculateBrainHealthScore() {
@@ -113,7 +104,6 @@ class HomeViewModel extends ChangeNotifier {
       await prefs.setString('last_reset_date', today.toIso8601String());
       await prefs.setDouble('current_score', _currentScore);
 
-
       notifyListeners();
     } else {
       // Load saved score for today
@@ -140,40 +130,21 @@ class HomeViewModel extends ChangeNotifier {
   /// Load icons cho tất cả apps
   Future<void> loadAppIcons() async {
     if (_appUsageList.isEmpty) {
-  
       return;
     }
 
     try {
-      
-
-      // Test with just one app first
-      final testPackage = _appUsageList.first.packageName;
-    
-
-      final testIcon = await _iconService.getAppIcon(testPackage);
-      if (testIcon != null) {
-      
-      } else {
-    
-      }
-
       final packageNames = _appUsageList.map((app) => app.packageName).toList();
-     
       final iconsMap = await _iconService.getMultipleAppIcons(packageNames);
-    
+
       // Update apps with icons
-      // ignore: unused_local_variable
-      int successCount = 0;
       _appUsageList =
           _appUsageList.map((app) {
             final iconBytes = iconsMap[app.packageName];
-            if (iconBytes != null) successCount++;
             return app.copyWith(iconBytes: iconBytes);
           }).toList();
       notifyListeners();
     } catch (e) {
-
       // Don't throw error, just continue without icons
     }
   }
@@ -221,7 +192,7 @@ class HomeViewModel extends ChangeNotifier {
       _appUsageList = usageList;
 
       // Load icons after getting usage data
-    
+
       await loadAppIcons();
 
       // Calculate total usage

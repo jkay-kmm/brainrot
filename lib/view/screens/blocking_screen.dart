@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../data/services/app_blocking_service.dart';
+import 'package:provider/provider.dart';
+import '../../generated/l10n.dart';
+import '../../view_model/blocking_view_model.dart';
 import '../../data/services/permission_service.dart';
 import '../../data/model/blocking_rule.dart';
 import '../../data/model/focus_mode.dart';
@@ -16,11 +18,9 @@ class BlockingScreen extends StatefulWidget {
 
 class _BlockingScreenState extends State<BlockingScreen>
     with TickerProviderStateMixin {
-  final AppBlockingService _blockingService = AppBlockingService();
   final PermissionService _permissionService = PermissionService();
   late TabController _tabController;
 
-  Map<String, AppBlockInfo> _appBlockStatus = {};
   bool _isLoading = true;
   PermissionStatus? _permissionStatus;
 
@@ -28,19 +28,17 @@ class _BlockingScreenState extends State<BlockingScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _initializeService();
+    _checkPermissions();
+    // BlockingViewModel is already initialized in app.dart
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() => _isLoading = false);
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  Future<void> _initializeService() async {
-    await _blockingService.initialize();
-    _loadBlockStatus();
-    _checkPermissions();
   }
 
   Future<void> _checkPermissions() async {
@@ -52,71 +50,65 @@ class _BlockingScreenState extends State<BlockingScreen>
     }
   }
 
-  Future<void> _loadBlockStatus() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final blockStatus = await _blockingService.getAllAppBlockStatus();
-      setState(() {
-        _appBlockStatus = blockStatus;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error loading block status: $e');
-      setState(() => _isLoading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFE4B5),
-      appBar: AppBar(
-        title: const Text(
-          'app locking',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFFFFE4B5),
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.orange,
-          unselectedLabelColor: Colors.black54,
-          indicatorColor: Colors.orange,
-          tabs: const [
-            Tab(text: 'Rules', icon: Icon(Icons.rule)),
-            Tab(text: 'Focus', icon: Icon(Icons.center_focus_strong)),
-            Tab(text: 'Apps', icon: Icon(Icons.apps)),
-          ],
-        ),
-        actions: [
-          // Permission setup button
-          if (_permissionStatus?.allPermissionsGranted != true)
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.red),
-              onPressed:
-                  () => Navigator.push(
+    final t = S.of(context);
+    
+    return Consumer<BlockingViewModel>(
+      builder: (context, blockingVM, child) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFFFE4B5),
+          appBar: AppBar(
+            title: Text(
+              t.appLocking,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: const Color(0xFFFFE4B5),
+            elevation: 0,
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: Colors.orange,
+              unselectedLabelColor: Colors.black54,
+              indicatorColor: Colors.orange,
+              tabs: [
+                Tab(text: t.rules, icon: const Icon(Icons.rule)),
+                Tab(text: t.focus, icon: const Icon(Icons.center_focus_strong)),
+                Tab(text: t.apps, icon: const Icon(Icons.apps)),
+              ],
+            ),
+            actions: [
+              // Permission setup button
+              if (_permissionStatus?.allPermissionsGranted != true)
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.red),
+                  onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const PermissionSetupScreen(),
                     ),
                   ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => _showHelpDialog(context),
+                ),
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                onPressed: () => _showHelpDialog(context, t),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildRulesTab(), _buildFocusTab(), _buildAppsTab()],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddRuleDialog(),
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildRulesTab(blockingVM, t),
+              _buildFocusTab(blockingVM, t),
+              _buildAppsTab(blockingVM, t),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddRuleDialog(),
+            backgroundColor: Colors.orange,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        );
+      },
     );
   }
 
@@ -124,43 +116,37 @@ class _BlockingScreenState extends State<BlockingScreen>
   // RULES TAB
   // ============================================================================
 
-  Widget _buildRulesTab() {
-    return StreamBuilder<List<BlockingRule>>(
-      stream: _blockingService.rulesStream,
-      initialData: _blockingService.rules,
-      builder: (context, snapshot) {
-        final rules = snapshot.data ?? [];
+  Widget _buildRulesTab(BlockingViewModel blockingVM, S t) {
+    final rules = blockingVM.rules;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Active rules warning
-              if (rules.where((r) => r.isActive).isEmpty) _buildWarningCard(),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Active rules warning
+          if (rules.where((r) => r.isActive).isEmpty) _buildWarningCard(t),
 
-              const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-              // Rules by type
-              ...BlockingType.values.map((type) {
-                final typeRules = rules.where((r) => r.type == type).toList();
-                if (typeRules.isEmpty) return const SizedBox.shrink();
+          // Rules by type
+          ...BlockingType.values.map((type) {
+            final typeRules = rules.where((r) => r.type == type).toList();
+            if (typeRules.isEmpty) return const SizedBox.shrink();
 
-                return Column(
-                  children: [
-                    _buildRuleSection(type, typeRules),
-                    const SizedBox(height: 20),
-                  ],
-                );
-              }),
-            ],
-          ),
-        );
-      },
+            return Column(
+              children: [
+                _buildRuleSection(type, typeRules, blockingVM, t),
+                const SizedBox(height: 20),
+              ],
+            );
+          }),
+        ],
+      ),
     );
   }
 
-  Widget _buildWarningCard() {
+  Widget _buildWarningCard(S t) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -180,10 +166,10 @@ class _BlockingScreenState extends State<BlockingScreen>
             child: const Icon(Icons.warning, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'No rules active right now - you should set some!',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+              t.noActiveRulesWarning,
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -191,7 +177,7 @@ class _BlockingScreenState extends State<BlockingScreen>
     );
   }
 
-  Widget _buildRuleSection(BlockingType type, List<BlockingRule> rules) {
+  Widget _buildRuleSection(BlockingType type, List<BlockingRule> rules, BlockingViewModel blockingVM, S t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,12 +203,12 @@ class _BlockingScreenState extends State<BlockingScreen>
           ],
         ),
         const SizedBox(height: 15),
-        ...rules.map((rule) => _buildRuleItem(rule)),
+        ...rules.map((rule) => _buildRuleItem(rule, blockingVM, t)),
       ],
     );
   }
 
-  Widget _buildRuleItem(BlockingRule rule) {
+  Widget _buildRuleItem(BlockingRule rule, BlockingViewModel blockingVM, S t) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(15),
@@ -260,7 +246,7 @@ class _BlockingScreenState extends State<BlockingScreen>
                 if (rule.targetPackages.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '${rule.targetPackages.length} apps targeted',
+                    '${rule.targetPackages.length} ${t.appsTargeted}',
                     style: const TextStyle(fontSize: 12, color: Colors.blue),
                   ),
                 ],
@@ -269,7 +255,7 @@ class _BlockingScreenState extends State<BlockingScreen>
           ),
           Switch(
             value: rule.isActive,
-            onChanged: (value) => _blockingService.toggleRule(rule.id),
+            onChanged: (value) => blockingVM.toggleRule(rule.id),
             activeColor: Colors.green,
           ),
         ],
@@ -281,43 +267,37 @@ class _BlockingScreenState extends State<BlockingScreen>
   // FOCUS TAB
   // ============================================================================
 
-  Widget _buildFocusTab() {
-    return StreamBuilder<List<FocusMode>>(
-      stream: _blockingService.focusModesStream,
-      initialData: _blockingService.focusModes,
-      builder: (context, snapshot) {
-        final focusModes = snapshot.data ?? [];
-        final activeFocus = _blockingService.activeFocusMode;
+  Widget _buildFocusTab(BlockingViewModel blockingVM, S t) {
+    final focusModes = blockingVM.focusModes;
+    final activeFocus = blockingVM.activeFocusMode;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Active focus mode card
-              if (activeFocus != null)
-                _buildActiveFocusCard(activeFocus)
-              else
-                _buildNoActiveFocusCard(),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Active focus mode card
+          if (activeFocus != null)
+            _buildActiveFocusCard(activeFocus, blockingVM, t)
+          else
+            _buildNoActiveFocusCard(t),
 
-              const SizedBox(height: 30),
+          const SizedBox(height: 30),
 
-              // Available focus modes
-              const Text(
-                'Available Focus Modes',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-
-              ...focusModes.map((mode) => _buildFocusModeItem(mode)),
-            ],
+          // Available focus modes
+          Text(
+            t.availableFocusModes,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-        );
-      },
+          const SizedBox(height: 15),
+
+          ...focusModes.map((mode) => _buildFocusModeItem(mode, blockingVM, t)),
+        ],
+      ),
     );
   }
 
-  Widget _buildActiveFocusCard(FocusMode focusMode) {
+  Widget _buildActiveFocusCard(FocusMode focusMode, BlockingViewModel blockingVM, S t) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -358,12 +338,12 @@ class _BlockingScreenState extends State<BlockingScreen>
                 ),
               ),
               ElevatedButton(
-                onPressed: () => _blockingService.stopFocusMode(),
+                onPressed: () => blockingVM.stopFocusMode(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Stop'),
+                child: Text(t.stop),
               ),
             ],
           ),
@@ -372,7 +352,7 @@ class _BlockingScreenState extends State<BlockingScreen>
     );
   }
 
-  Widget _buildNoActiveFocusCard() {
+  Widget _buildNoActiveFocusCard(S t) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -380,14 +360,14 @@ class _BlockingScreenState extends State<BlockingScreen>
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.grey.withOpacity(0.3)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.grey, size: 30),
-          SizedBox(width: 15),
+          const Icon(Icons.info_outline, color: Colors.grey, size: 30),
+          const SizedBox(width: 15),
           Expanded(
             child: Text(
-              'No focus mode is currently active. Select one below to start focusing.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              t.noFocusModeActive,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ),
         ],
@@ -395,7 +375,7 @@ class _BlockingScreenState extends State<BlockingScreen>
     );
   }
 
-  Widget _buildFocusModeItem(FocusMode focusMode) {
+  Widget _buildFocusModeItem(FocusMode focusMode, BlockingViewModel blockingVM, S t) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -418,7 +398,7 @@ class _BlockingScreenState extends State<BlockingScreen>
                 ? const Icon(Icons.check_circle, color: Colors.green)
                 : const Icon(Icons.play_arrow, color: Colors.grey),
         onTap:
-            focusMode.isActive ? null : () => _showFocusModeDialog(focusMode),
+            focusMode.isActive ? null : () => _showFocusModeDialog(focusMode, blockingVM, t),
         tileColor: Colors.white.withOpacity(0.7),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -429,12 +409,12 @@ class _BlockingScreenState extends State<BlockingScreen>
   // APPS TAB
   // ============================================================================
 
-  Widget _buildAppsTab() {
-    if (_isLoading) {
+  Widget _buildAppsTab(BlockingViewModel blockingVM, S t) {
+    if (blockingVM.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final apps = _appBlockStatus.values.toList();
+    final apps = blockingVM.appBlockStatus.values.toList();
     apps.sort((a, b) => a.appName.compareTo(b.appName));
 
     return SingleChildScrollView(
@@ -447,7 +427,7 @@ class _BlockingScreenState extends State<BlockingScreen>
             children: [
               Expanded(
                 child: _buildSummaryCard(
-                  'Blocked',
+                  t.blocked,
                   apps.where((a) => a.isBlocked).length.toString(),
                   Colors.red,
                   Icons.block,
@@ -456,7 +436,7 @@ class _BlockingScreenState extends State<BlockingScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: _buildSummaryCard(
-                  'Limited',
+                  t.limited,
                   apps.where((a) => a.isLimited).length.toString(),
                   Colors.orange,
                   Icons.access_time,
@@ -465,7 +445,7 @@ class _BlockingScreenState extends State<BlockingScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: _buildSummaryCard(
-                  'Allowed',
+                  t.allowed,
                   apps.where((a) => a.isAllowed).length.toString(),
                   Colors.green,
                   Icons.check_circle,
@@ -474,16 +454,21 @@ class _BlockingScreenState extends State<BlockingScreen>
             ],
           ),
 
+          const SizedBox(height: 15),
+
+          // Daily reset info card
+          _buildDailyResetCard(blockingVM, t),
+
           const SizedBox(height: 20),
 
           // Apps list
-          const Text(
-            'App Status',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            t.appStatus,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 15),
 
-          ...apps.map((app) => _buildAppStatusItem(app)),
+          ...apps.map((app) => _buildAppStatusItem(app, t)),
         ],
       ),
     );
@@ -520,7 +505,7 @@ class _BlockingScreenState extends State<BlockingScreen>
     );
   }
 
-  Widget _buildAppStatusItem(AppBlockInfo app) {
+  Widget _buildAppStatusItem(AppBlockInfo app, S t) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(15),
@@ -562,7 +547,7 @@ class _BlockingScreenState extends State<BlockingScreen>
                 if (app.dailyUsage != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Today: ${app.formattedDailyUsage}',
+                    '${t.today}: ${app.formattedDailyUsage}',
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
@@ -614,9 +599,59 @@ class _BlockingScreenState extends State<BlockingScreen>
     }
   }
 
-  // ============================================================================
-  // DIALOGS
-  // ============================================================================
+  Widget _buildDailyResetCard(BlockingViewModel blockingVM, S t) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Daily Usage Reset',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Resets in ${blockingVM.formattedTimeUntilReset}',
+                  style: const TextStyle(fontSize: 14, color: Colors.blue),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Usage counters reset automatically at midnight',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => _showDailyResetInfo(t),
+            icon: const Icon(Icons.info_outline, color: Colors.blue),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   void _showAddRuleDialog() {
     showModalBottomSheet(
@@ -635,19 +670,19 @@ class _BlockingScreenState extends State<BlockingScreen>
     );
   }
 
-  void _showFocusModeDialog(FocusMode focusMode) {
+  void _showFocusModeDialog(FocusMode focusMode, BlockingViewModel blockingVM, S t) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Start ${focusMode.name}?'),
+            title: Text(t.startFocusMode(focusMode.name)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(focusMode.description),
                 const SizedBox(height: 15),
-                const Text('Duration:'),
+                Text('${t.duration}:'),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -655,12 +690,12 @@ class _BlockingScreenState extends State<BlockingScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _blockingService.startFocusMode(
+                          blockingVM.startFocusMode(
                             focusMode.id,
                             duration: const Duration(minutes: 30),
                           );
                         },
-                        child: const Text('30 min'),
+                        child: Text('30 ${t.minutes}'),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -668,12 +703,12 @@ class _BlockingScreenState extends State<BlockingScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _blockingService.startFocusMode(
+                          blockingVM.startFocusMode(
                             focusMode.id,
                             duration: const Duration(hours: 1),
                           );
                         },
-                        child: const Text('1 hour'),
+                        child: Text('1 ${t.hour}'),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -681,12 +716,12 @@ class _BlockingScreenState extends State<BlockingScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _blockingService.startFocusMode(
+                          blockingVM.startFocusMode(
                             focusMode.id,
                             duration: const Duration(hours: 2),
                           );
                         },
-                        child: const Text('2 hours'),
+                        child: Text('2 ${t.hours}'),
                       ),
                     ),
                   ],
@@ -696,40 +731,63 @@ class _BlockingScreenState extends State<BlockingScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(t.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _blockingService.startFocusMode(focusMode.id);
+                  blockingVM.startFocusMode(focusMode.id);
                 },
-                child: const Text('Start Indefinitely'),
+                child: Text(t.startIndefinitely),
               ),
             ],
           ),
     );
   }
 
-  void _showHelpDialog(BuildContext context) {
+  void _showHelpDialog(BuildContext context, S t) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('App Blocking Help'),
-            content: const Text(
-              'This screen helps you manage app blocking rules and focus modes.\n\n'
-              '• Rules: Set time limits, schedules, and blocks for specific apps\n'
-              '• Focus: Use predefined focus modes for different activities\n'
-              '• Apps: View the current blocking status of all your apps\n\n'
-              'Toggle rules on/off using the switches, or start focus modes for immediate blocking.',
-            ),
+            title: Text(t.appBlockingHelp),
+            content: Text(t.appBlockingHelpContent.replaceAll('\\n', '\n')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Got it!'),
+                child: Text(t.gotIt),
               ),
             ],
           ),
+    );
+  }
+
+  void _showDailyResetInfo(S t) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.refresh, color: Colors.blue),
+            SizedBox(width: 10),
+            Text('Daily Usage Reset'),
+          ],
+        ),
+        content: const Text(
+          'Daily usage counters automatically reset to zero every day at midnight (00:00).\n\n'
+          'This ensures that:\n'
+          '• Time limits restart fresh each day\n'
+          '• Usage statistics are accurate\n'
+          '• App blocking rules work correctly\n\n'
+          'Just like Digital Wellbeing, your daily usage will reset automatically without any action needed from you.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.gotIt),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../generated/l10n.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
 import 'blocking_screen.dart';
@@ -24,14 +25,16 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = S.of(context);
+    
     return Scaffold(
       body: SafeArea(
-        top: false, // Allow content to extend to top of screen
+        top: false,
         bottom: false,
         child: _screens[_currentIndex],
       ),
       bottomNavigationBar: Container(
-        height: 100, // Tăng chiều cao từ mặc định (~56) lên 80
+        height: 85,
         decoration: BoxDecoration(
           color: Color(0xFFFFE4B5),
           boxShadow: [
@@ -81,7 +84,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: 'home',
+                label: t.home,
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -96,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: 'stats',
+                label: t.stats,
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -111,7 +114,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: 'blocking',
+                label: t.blocking,
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -126,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: 'settings',
+                label: t.settings,
               ),
             ],
           ),

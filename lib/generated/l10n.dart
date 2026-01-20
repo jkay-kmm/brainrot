@@ -18,10 +18,8 @@ class S {
   static S? _current;
 
   static S get current {
-    assert(
-      _current != null,
-      'No instance of S was loaded. Try to initialize the S delegate before accessing S.current.',
-    );
+    assert(_current != null,
+        'No instance of S was loaded. Try to initialize the S delegate before accessing S.current.');
     return _current!;
   }
 
@@ -43,10 +41,8 @@ class S {
 
   static S of(BuildContext context) {
     final instance = S.maybeOf(context);
-    assert(
-      instance != null,
-      'No instance of S present in the widget tree. Did you add S.delegate in localizationsDelegates?',
-    );
+    assert(instance != null,
+        'No instance of S present in the widget tree. Did you add S.delegate in localizationsDelegates?');
     return instance!;
   }
 
@@ -56,7 +52,12 @@ class S {
 
   /// `Settings`
   String get settings {
-    return Intl.message('Settings', name: 'settings', desc: '', args: []);
+    return Intl.message(
+      'Settings',
+      name: 'settings',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Screen Time Goal`
@@ -71,12 +72,22 @@ class S {
 
   /// `hours`
   String get hours {
-    return Intl.message('hours', name: 'hours', desc: '', args: []);
+    return Intl.message(
+      'hours',
+      name: 'hours',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Language`
   String get language {
-    return Intl.message('Language', name: 'language', desc: '', args: []);
+    return Intl.message(
+      'Language',
+      name: 'language',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Change app language`
@@ -91,12 +102,22 @@ class S {
 
   /// `English`
   String get english {
-    return Intl.message('English', name: 'english', desc: '', args: []);
+    return Intl.message(
+      'English',
+      name: 'english',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Tiếng Việt`
   String get vietnamese {
-    return Intl.message('Tiếng Việt', name: 'vietnamese', desc: '', args: []);
+    return Intl.message(
+      'Tiếng Việt',
+      name: 'vietnamese',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Support & Feedback`
@@ -141,12 +162,22 @@ class S {
 
   /// `Contact Us`
   String get contactUs {
-    return Intl.message('Contact Us', name: 'contactUs', desc: '', args: []);
+    return Intl.message(
+      'Contact Us',
+      name: 'contactUs',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Legal`
   String get legal {
-    return Intl.message('Legal', name: 'legal', desc: '', args: []);
+    return Intl.message(
+      'Legal',
+      name: 'legal',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Privacy Policy`
@@ -161,7 +192,12 @@ class S {
 
   /// `Dark Mode`
   String get darkMode {
-    return Intl.message('Dark Mode', name: 'darkMode', desc: '', args: []);
+    return Intl.message(
+      'Dark Mode',
+      name: 'darkMode',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Switch between light and dark theme`
@@ -181,6 +217,266 @@ class S {
       name: 'appVersion',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Home`
+  String get home {
+    return Intl.message(
+      'Home',
+      name: 'home',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stats`
+  String get stats {
+    return Intl.message(
+      'Stats',
+      name: 'stats',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocking`
+  String get blocking {
+    return Intl.message(
+      'Blocking',
+      name: 'blocking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App Locking`
+  String get appLocking {
+    return Intl.message(
+      'App Locking',
+      name: 'appLocking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rules`
+  String get rules {
+    return Intl.message(
+      'Rules',
+      name: 'rules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Focus`
+  String get focus {
+    return Intl.message(
+      'Focus',
+      name: 'focus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps`
+  String get apps {
+    return Intl.message(
+      'Apps',
+      name: 'apps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocked`
+  String get blocked {
+    return Intl.message(
+      'Blocked',
+      name: 'blocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Limited`
+  String get limited {
+    return Intl.message(
+      'Limited',
+      name: 'limited',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allowed`
+  String get allowed {
+    return Intl.message(
+      'Allowed',
+      name: 'allowed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App Status`
+  String get appStatus {
+    return Intl.message(
+      'App Status',
+      name: 'appStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Available Focus Modes`
+  String get availableFocusModes {
+    return Intl.message(
+      'Available Focus Modes',
+      name: 'availableFocusModes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No rules active right now - you should set some!`
+  String get noActiveRulesWarning {
+    return Intl.message(
+      'No rules active right now - you should set some!',
+      name: 'noActiveRulesWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `apps targeted`
+  String get appsTargeted {
+    return Intl.message(
+      'apps targeted',
+      name: 'appsTargeted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message(
+      'Today',
+      name: 'today',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop`
+  String get stop {
+    return Intl.message(
+      'Stop',
+      name: 'stop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel`
+  String get cancel {
+    return Intl.message(
+      'Cancel',
+      name: 'cancel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start Indefinitely`
+  String get startIndefinitely {
+    return Intl.message(
+      'Start Indefinitely',
+      name: 'startIndefinitely',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Duration`
+  String get duration {
+    return Intl.message(
+      'Duration',
+      name: 'duration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `min`
+  String get minutes {
+    return Intl.message(
+      'min',
+      name: 'minutes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `hour`
+  String get hour {
+    return Intl.message(
+      'hour',
+      name: 'hour',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App Blocking Help`
+  String get appBlockingHelp {
+    return Intl.message(
+      'App Blocking Help',
+      name: 'appBlockingHelp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This screen helps you manage app blocking rules and focus modes.\n\n• Rules: Set time limits, schedules, and blocks for specific apps\n• Focus: Use predefined focus modes for different activities\n• Apps: View the current blocking status of all your apps\n\nToggle rules on/off using the switches, or start focus modes for immediate blocking.`
+  String get appBlockingHelpContent {
+    return Intl.message(
+      'This screen helps you manage app blocking rules and focus modes.\\n\\n• Rules: Set time limits, schedules, and blocks for specific apps\\n• Focus: Use predefined focus modes for different activities\\n• Apps: View the current blocking status of all your apps\\n\\nToggle rules on/off using the switches, or start focus modes for immediate blocking.',
+      name: 'appBlockingHelpContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Got it!`
+  String get gotIt {
+    return Intl.message(
+      'Got it!',
+      name: 'gotIt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No focus mode is currently active. Select one below to start focusing.`
+  String get noFocusModeActive {
+    return Intl.message(
+      'No focus mode is currently active. Select one below to start focusing.',
+      name: 'noFocusModeActive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start {focusModeName}?`
+  String startFocusMode(Object focusModeName) {
+    return Intl.message(
+      'Start $focusModeName?',
+      name: 'startFocusMode',
+      desc: '',
+      args: [focusModeName],
     );
   }
 }

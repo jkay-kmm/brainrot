@@ -29,6 +29,21 @@ class BlockingViewModel extends ChangeNotifier {
   int get limitedAppsCount => _appBlockStatus.values.where((app) => app.isLimited).length;
   int get allowedAppsCount => _appBlockStatus.values.where((app) => app.isAllowed).length;
 
+  /// Get time until next daily reset (midnight)
+  Duration get timeUntilDailyReset {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    return tomorrow.difference(now);
+  }
+
+  /// Get formatted time until daily reset
+  String get formattedTimeUntilReset {
+    final duration = timeUntilDailyReset;
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    return '${hours}h ${minutes}m';
+  }
+
   /// Initialize the view model
   Future<void> initialize() async {
     _setLoading(true);

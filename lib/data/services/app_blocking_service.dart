@@ -9,6 +9,7 @@ import '../model/focus_mode.dart';
 import '../model/app_usage_info.dart';
 import 'app_usage_service.dart';
 import 'real_app_usage_service.dart';
+import 'usage_history_service.dart';
 
 class AppBlockingService {
   static final AppBlockingService _instance = AppBlockingService._internal();
@@ -20,6 +21,7 @@ class AppBlockingService {
   static const String _focusModesKey = 'flutter.focus_modes';
   static const String _dailyUsageKey = 'flutter.daily_usage_tracking';
   static const String _sessionUsageKey = 'flutter.session_usage_tracking';
+  static const String _lastResetDateKey = 'flutter.last_reset_date';
 
   // In-memory cache
   List<BlockingRule> _rules = [];
@@ -27,6 +29,7 @@ class AppBlockingService {
   Map<String, Duration> _dailyUsageCache = {};
   Map<String, Duration> _sessionUsageCache = {};
   Map<String, DateTime> _sessionStartTimes = {};
+  DateTime? _lastResetDate;
 
   // Stream controllers for real-time updates
   final StreamController<List<BlockingRule>> _rulesController =
@@ -45,9 +48,11 @@ class AppBlockingService {
   // Services
   final AppUsageService _mockUsageService = AppUsageService();
   final RealAppUsageService _realUsageService = RealAppUsageService();
+  final UsageHistoryService _historyService = UsageHistoryService();
 
   // Timer for periodic checks
   Timer? _periodicTimer;
+  Timer? _dailyResetTimer;
 
   /// Initialize the service
   Future<void> initialize() async {
@@ -56,9 +61,16 @@ class AppBlockingService {
     await _loadRules();
     await _loadFocusModes();
     await _loadUsageTracking();
+    await _loadLastResetDate();
+
+    // Check if we need to reset daily usage
+    await _checkAndResetDailyUsage();
 
     // Start periodic monitoring
     _startPeriodicMonitoring();
+    
+    // Start daily reset scheduler
+    _startDailyResetScheduler();
 
     debugPrint('✅ [BLOCKING] AppBlockingService initialized');
   }
@@ -66,6 +78,7 @@ class AppBlockingService {
   /// Dispose resources
   void dispose() {
     _periodicTimer?.cancel();
+    _dailyResetTimer?.cancel();
     _rulesController.close();
     _focusModesController.close();
     _blockStatusController.close();
@@ -386,6 +399,69 @@ class AppBlockingService {
     }
   }
 
+  /// Start daily reset scheduler
+  void _startDailyResetScheduler() {
+    // Calculate time until next midnight
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final timeUntilMidnight = tomorrow.difference(now);
+
+    debugPrint('🕛 [BLOCKING] Next daily reset in ${timeUntilMidnight.inHours}h ${timeUntilMidnight.inMinutes % 60}m');
+
+    // Schedule first reset at midnight
+    _dailyResetTimer = Timer(timeUntilMidnight, () {
+      _performDailyReset();
+      
+      // Then schedule periodic daily resets every 24 hours
+      _dailyResetTimer = Timer.periodic(const Duration(days: 1), (timer) {
+        _performDailyReset();
+      });
+    });
+  }
+
+  /// Perform daily reset at midnight
+  Future<void> _performDailyReset() async {
+    debugPrint('🌙 [BLOCKING] Performing daily reset at midnight');
+    
+    // Save today's usage to history before reset
+    try {
+      await _historyService.saveTodayUsage();
+      debugPrint('📊 [BLOCKING] Saved usage history before reset');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error saving usage history: $e');
+    }
+    
+    await resetDailyUsage();
+    await _saveLastResetDate(DateTime.now());
+    
+    // Update block status after reset
+    await _updateBlockStatus();
+    
+    debugPrint('✅ [BLOCKING] Daily reset completed');
+  }
+
+  /// Check if we need to reset daily usage (in case app was closed during midnight)
+  Future<void> _checkAndResetDailyUsage() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    if (_lastResetDate == null) {
+      // First time running, set last reset to today
+      await _saveLastResetDate(today);
+      return;
+    }
+    
+    final lastResetDay = DateTime(_lastResetDate!.year, _lastResetDate!.month, _lastResetDate!.day);
+    
+    // If last reset was not today, reset daily usage
+    if (lastResetDay.isBefore(today)) {
+      debugPrint('📅 [BLOCKING] Detected day change, resetting daily usage');
+      await resetDailyUsage();
+      await _saveLastResetDate(today);
+      debugPrint('✅ [BLOCKING] Daily usage reset for new day');
+    }
+  }
+
   /// Load rules from storage
   Future<void> _loadRules() async {
     try {
@@ -509,6 +585,35 @@ class AppBlockingService {
       debugPrint('💾 [BLOCKING] Saved usage tracking data');
     } catch (e) {
       debugPrint('❌ [BLOCKING] Error saving usage tracking: $e');
+    }
+  }
+
+  /// Load last reset date
+  Future<void> _loadLastResetDate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastResetString = prefs.getString(_lastResetDateKey);
+      
+      if (lastResetString != null) {
+        _lastResetDate = DateTime.parse(lastResetString);
+        debugPrint('📥 [BLOCKING] Loaded last reset date: ${_lastResetDate}');
+      } else {
+        debugPrint('📥 [BLOCKING] No previous reset date found');
+      }
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error loading last reset date: $e');
+    }
+  }
+
+  /// Save last reset date
+  Future<void> _saveLastResetDate(DateTime date) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastResetDateKey, date.toIso8601String());
+      _lastResetDate = date;
+      debugPrint('💾 [BLOCKING] Saved last reset date: $date');
+    } catch (e) {
+      debugPrint('❌ [BLOCKING] Error saving last reset date: $e');
     }
   }
 

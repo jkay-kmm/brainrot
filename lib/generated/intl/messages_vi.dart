@@ -20,36 +20,69 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'vi';
 
+  static String m0(focusModeName) => "Bắt đầu ${focusModeName}?";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "appVersion": MessageLookupByLibrary.simpleMessage(
-      "Phiên bản ứng dụng 1.0.0",
-    ),
-    "changeLanguage": MessageLookupByLibrary.simpleMessage(
-      "Thay đổi ngôn ngữ ứng dụng",
-    ),
-    "contactUs": MessageLookupByLibrary.simpleMessage("Liên hệ chúng tôi"),
-    "darkMode": MessageLookupByLibrary.simpleMessage("Chế độ tối"),
-    "english": MessageLookupByLibrary.simpleMessage("English"),
-    "featureRequests": MessageLookupByLibrary.simpleMessage(
-      "Yêu cầu tính năng",
-    ),
-    "helpSupport": MessageLookupByLibrary.simpleMessage("Trợ giúp & Hỗ trợ"),
-    "hours": MessageLookupByLibrary.simpleMessage("giờ"),
-    "language": MessageLookupByLibrary.simpleMessage("Ngôn ngữ"),
-    "leaveReview": MessageLookupByLibrary.simpleMessage("Đánh giá ứng dụng"),
-    "legal": MessageLookupByLibrary.simpleMessage("Pháp lý"),
-    "privacyPolicy": MessageLookupByLibrary.simpleMessage("Chính sách bảo mật"),
-    "screenTimeGoal": MessageLookupByLibrary.simpleMessage(
-      "Mục tiêu thời gian màn hình",
-    ),
-    "settings": MessageLookupByLibrary.simpleMessage("Cài đặt"),
-    "supportFeedback": MessageLookupByLibrary.simpleMessage(
-      "Hỗ trợ & Phản hồi",
-    ),
-    "switchTheme": MessageLookupByLibrary.simpleMessage(
-      "Chuyển đổi giữa giao diện sáng và tối",
-    ),
-    "vietnamese": MessageLookupByLibrary.simpleMessage("Tiếng Việt"),
-  };
+        "allowed": MessageLookupByLibrary.simpleMessage("Cho phép"),
+        "appBlockingHelp":
+            MessageLookupByLibrary.simpleMessage("Trợ giúp chặn ứng dụng"),
+        "appBlockingHelpContent": MessageLookupByLibrary.simpleMessage(
+            "Màn hình này giúp bạn quản lý các quy tắc chặn ứng dụng và chế độ tập trung.\\n\\n• Quy tắc: Đặt giới hạn thời gian, lịch trình và chặn cho các ứng dụng cụ thể\\n• Tập trung: Sử dụng các chế độ tập trung được định sẵn cho các hoạt động khác nhau\\n• Ứng dụng: Xem trạng thái chặn hiện tại của tất cả ứng dụng\\n\\nBật/tắt quy tắc bằng các công tắc, hoặc bắt đầu chế độ tập trung để chặn ngay lập tức."),
+        "appLocking": MessageLookupByLibrary.simpleMessage("Khóa ứng dụng"),
+        "appStatus":
+            MessageLookupByLibrary.simpleMessage("Trạng thái ứng dụng"),
+        "appVersion":
+            MessageLookupByLibrary.simpleMessage("Phiên bản ứng dụng 1.0.0"),
+        "apps": MessageLookupByLibrary.simpleMessage("Ứng dụng"),
+        "appsTargeted":
+            MessageLookupByLibrary.simpleMessage("ứng dụng được nhắm mục tiêu"),
+        "availableFocusModes":
+            MessageLookupByLibrary.simpleMessage("Chế độ tập trung có sẵn"),
+        "blocked": MessageLookupByLibrary.simpleMessage("Đã chặn"),
+        "blocking": MessageLookupByLibrary.simpleMessage("Chặn ứng dụng"),
+        "cancel": MessageLookupByLibrary.simpleMessage("Hủy"),
+        "changeLanguage":
+            MessageLookupByLibrary.simpleMessage("Thay đổi ngôn ngữ ứng dụng"),
+        "contactUs": MessageLookupByLibrary.simpleMessage("Liên hệ chúng tôi"),
+        "darkMode": MessageLookupByLibrary.simpleMessage("Chế độ tối"),
+        "duration": MessageLookupByLibrary.simpleMessage("Thời lượng"),
+        "english": MessageLookupByLibrary.simpleMessage("English"),
+        "featureRequests":
+            MessageLookupByLibrary.simpleMessage("Yêu cầu tính năng"),
+        "focus": MessageLookupByLibrary.simpleMessage("Tập trung"),
+        "gotIt": MessageLookupByLibrary.simpleMessage("Đã hiểu!"),
+        "helpSupport":
+            MessageLookupByLibrary.simpleMessage("Trợ giúp & Hỗ trợ"),
+        "home": MessageLookupByLibrary.simpleMessage("Trang chủ"),
+        "hour": MessageLookupByLibrary.simpleMessage("giờ"),
+        "hours": MessageLookupByLibrary.simpleMessage("giờ"),
+        "language": MessageLookupByLibrary.simpleMessage("Ngôn ngữ"),
+        "leaveReview":
+            MessageLookupByLibrary.simpleMessage("Đánh giá ứng dụng"),
+        "legal": MessageLookupByLibrary.simpleMessage("Pháp lý"),
+        "limited": MessageLookupByLibrary.simpleMessage("Giới hạn"),
+        "minutes": MessageLookupByLibrary.simpleMessage("phút"),
+        "noActiveRulesWarning": MessageLookupByLibrary.simpleMessage(
+            "Hiện tại không có quy tắc nào hoạt động - bạn nên thiết lập một số quy tắc!"),
+        "noFocusModeActive": MessageLookupByLibrary.simpleMessage(
+            "Hiện tại không có chế độ tập trung nào đang hoạt động. Chọn một chế độ bên dưới để bắt đầu tập trung."),
+        "privacyPolicy":
+            MessageLookupByLibrary.simpleMessage("Chính sách bảo mật"),
+        "rules": MessageLookupByLibrary.simpleMessage("Quy tắc"),
+        "screenTimeGoal":
+            MessageLookupByLibrary.simpleMessage("Mục tiêu thời gian màn hình"),
+        "settings": MessageLookupByLibrary.simpleMessage("Cài đặt"),
+        "startFocusMode": m0,
+        "startIndefinitely":
+            MessageLookupByLibrary.simpleMessage("Bắt đầu vô thời hạn"),
+        "stats": MessageLookupByLibrary.simpleMessage("Thống kê"),
+        "stop": MessageLookupByLibrary.simpleMessage("Dừng"),
+        "supportFeedback":
+            MessageLookupByLibrary.simpleMessage("Hỗ trợ & Phản hồi"),
+        "switchTheme": MessageLookupByLibrary.simpleMessage(
+            "Chuyển đổi giữa giao diện sáng và tối"),
+        "today": MessageLookupByLibrary.simpleMessage("Hôm nay"),
+        "vietnamese": MessageLookupByLibrary.simpleMessage("Tiếng Việt")
+      };
 }

@@ -7,6 +7,7 @@ import '../../view_model/app_view_model.dart';
 import '../../view_model/home_view_model.dart';
 import '../../data/model/app_usage_info.dart';
 import '../../core/routes/app_routes.dart';
+import '../../widgets/loading_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     homeViewModel = HomeViewModel();
-    // Load today's usage data when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       homeViewModel.loadTodayUsage();
     });
@@ -80,13 +80,16 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Consumer<HomeViewModel>(
           builder: (context, homeViewModel, child) {
             if (homeViewModel.isLoading) {
-              return const Center(
+              return  Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(),
+                    const SpinKitFadingCircle(
+                      color: Colors.orange,
+                      size: 48,
+                    ),
                     SizedBox(height: 16),
-                    Text('Loading app usage data...'),
+                    Text('Đang tải dữ liệu sử dụng ứng dụng...'),
                   ],
                 ),
               );
@@ -123,43 +126,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildWelcomeSection(context, homeViewModel),
-                    // const SizedBox(height: 24),
                     Divider(
                       thickness: 1,
                       color: Colors.black12,
-                      indent: 16, // lề trái
-                      endIndent: 16, // lề phải
+                      indent: 16,
+                      endIndent: 16,
                     ),
-
                     _buildUsageOverview(context, homeViewModel),
-                    // const SizedBox(height: 12),
                     Divider(
                       thickness: 1,
                       color: Colors.black12,
-                      indent: 16, // lề trái
-                      endIndent: 16, // lề phải
+                      indent: 16,
+                      endIndent: 16,
                     ),
 
                     _buildTopAppsSection(context, homeViewModel),
                     const SizedBox(height: 24),
-                    // _buildAllAppsSection(context, homeViewModel),
                   ],
                 ),
               ),
             );
           },
         ),
-        // floatingActionButton: Consumer<HomeViewModel>(
-        //   builder: (context, homeViewModel, child) {
-        //     return FloatingActionButton.extended(
-        //       onPressed: homeViewModel.isLoading
-        //           ? null
-        //           : () => _showUsageActions(context, homeViewModel),
-        //       icon: const Icon(Icons.analytics),
-        //       label: const Text('Actions'),
-        //     );
-        //   },
-        // ),
       ),
     );
   }
@@ -218,15 +206,13 @@ Widget _buildBrainHealthCalculation(
   BuildContext context,
   HomeViewModel homeViewModel,
 ) {
-  // Use the calculated score from ViewModel instead of calculating here
   final finalScore = homeViewModel.currentScore;
   final totalMinutes = homeViewModel.totalUsage.inMinutes;
-  final goalMinutes = 120; // 2 hours goal
+  final goalMinutes = 120;
 
   return Column(
     children: [
-      // Mood image instead of brain icon
-      Container(
+      SizedBox(
         width: 100,
         height: 100,
         child: ClipRRect(
@@ -237,7 +223,6 @@ Widget _buildBrainHealthCalculation(
             height: 120,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              // Fallback to default brain image if mood image not found
               return ClipRRect(
                 borderRadius: BorderRadius.circular(60),
                 child: Image.asset(
@@ -274,7 +259,6 @@ Widget _buildBrainHealthCalculation(
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
-                // color: _getScoreColor(finalScore),
                 fontSize: 48,
               ),
             ),
@@ -282,17 +266,13 @@ Widget _buildBrainHealthCalculation(
         ),
       ),
       const SizedBox(height: 16),
-
-      // Progress bar with percentage
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30), // thu hẹp hai bên
+        padding: const EdgeInsets.symmetric(horizontal: 30),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final percent = (finalScore.clamp(0, 100)) / 100;
             final barHeight = 4.0;
-            final fillWidth =
-                constraints.maxWidth * percent; // thay MediaQuery ở đây
-
+            final fillWidth = constraints.maxWidth * percent;
             return Container(
               width: double.infinity,
               height: barHeight,
@@ -313,8 +293,6 @@ Widget _buildBrainHealthCalculation(
                       ),
                     ),
                   ),
-                  // (tuỳ chọn) % ở giữa
-                  // Center(child: Text('${finalScore.toInt()}%', ...)),
                 ],
               ),
             );
@@ -323,12 +301,11 @@ Widget _buildBrainHealthCalculation(
       ),
       const SizedBox(height: 16),
 
-      // Health status indicator
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Score resets to 100 every day at midnight',
+            'Điểm số sẽ đặt lại về 100 vào lúc nửa đêm.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
@@ -349,14 +326,11 @@ Widget _buildBrainHealthCalculation(
           ),
         ],
       ),
-
-      // Show reset info
       const SizedBox(height: 16),
     ],
   );
 }
 
-// Updated method signature to match the new calculation
 void _showHealthCalculationDetails(
   BuildContext context,
   HomeViewModel homeViewModel,
@@ -364,7 +338,6 @@ void _showHealthCalculationDetails(
   int goalMinutes,
   double finalScore,
 ) {
-  // Calculate impacts for display
   double preGoalImpact = 0.0;
   double postGoalImpact = 0.0;
 
@@ -434,7 +407,7 @@ void _showHealthCalculationDetails(
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(30),
                             child: Image.asset(
-                              'assets/images/vui.png', // Default fallback image
+                              'assets/images/vui.png',
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,
@@ -459,15 +432,17 @@ void _showHealthCalculationDetails(
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 5),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          'Brain Health Calculation',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                        Center(
+                          child: Text(
+                            'Cách tính sức khỏe não',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
@@ -476,7 +451,7 @@ void _showHealthCalculationDetails(
               ),
               const SizedBox(height: 8),
               Text(
-                'Your brain health score starts at 100 points each day at midnight and decreases based on screen time.',
+                'Điểm sức khỏe não bộ của bạn bắt đầu từ 100 điểm mỗi ngày vào lúc nửa đêm và giảm dần dựa trên thời gian sử dụng thiết bị điện tử.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -487,7 +462,6 @@ void _showHealthCalculationDetails(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Current status
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -501,22 +475,21 @@ void _showHealthCalculationDetails(
                         ),
                         child: Column(
                           children: [
-                            // Mood image in the score display
                             Container(
                               width: 80,
                               height: 80,
                               margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(40),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _getScoreColor(
-                                      finalScore,
-                                    ).withOpacity(0.3),
-                                    blurRadius: 10,
-                                  ),
-                                ],
-                              ),
+                              // decoration: BoxDecoration(
+                              //   borderRadius: BorderRadius.circular(40),
+                              //   boxShadow: [
+                              //     BoxShadow(
+                              //       color: _getScoreColor(
+                              //         finalScore,
+                              //       ).withOpacity(0.3),
+                              //       blurRadius: 10,
+                              //     ),
+                              //   ],
+                              // ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(40),
                                 child: Image.asset(
@@ -528,7 +501,7 @@ void _showHealthCalculationDetails(
                                     return ClipRRect(
                                       borderRadius: BorderRadius.circular(40),
                                       child: Image.asset(
-                                        'assets/images/vui.png', // Default fallback image
+                                        'assets/images/vui.png',
                                         width: 80,
                                         height: 80,
                                         fit: BoxFit.cover,
@@ -559,7 +532,7 @@ void _showHealthCalculationDetails(
                               ),
                             ),
                             Text(
-                              'Current Score',
+                              'Điểm hiện tại',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -577,31 +550,29 @@ void _showHealthCalculationDetails(
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Screen time details
                       _buildCalculationRow(
-                        'estimated screen time',
-                        '${totalMinutes} min (${(totalMinutes / 60).toStringAsFixed(1)} hrs)',
+                        'thời gian ước tính',
+                        '${totalMinutes} phút (${(totalMinutes / 60).toStringAsFixed(1)} giờ)',
                       ),
                       _buildCalculationRow(
-                        'your goal',
-                        '$goalMinutes min (${(goalMinutes / 60).toStringAsFixed(1)} hrs)',
+                        'mục tiêu',
+                        '$goalMinutes phút (${(goalMinutes / 60).toStringAsFixed(1)} giờ)',
                       ),
 
                       const SizedBox(height: 16),
 
                       if (totalMinutes <= goalMinutes) ...[
                         _buildCalculationRow(
-                          'impact',
-                          '${(totalMinutes / 60).toStringAsFixed(1)} hrs * ${(preGoalImpact / (totalMinutes / 60)).toStringAsFixed(1)}/hr',
-                          impact: '-${preGoalImpact.toStringAsFixed(1)} points',
+                          'điểm tiêu hao',
+                          '${(totalMinutes / 60).toStringAsFixed(1)} giờ * ${(preGoalImpact / (totalMinutes / 60)).toStringAsFixed(1)}/hr',
+                          impact: '-${preGoalImpact.toStringAsFixed(1)} điểm',
                           impactColor: Colors.red,
                         ),
                       ] else ...[
                         _buildCalculationRow(
                           'pre-goal impact',
-                          '${(goalMinutes / 60).toStringAsFixed(1)} hrs * 5.0/hr',
-                          impact: '-${preGoalImpact.toStringAsFixed(1)} points',
+                          '${(goalMinutes / 60).toStringAsFixed(1)} giờ * 5.0/giờ',
+                          impact: '-${preGoalImpact.toStringAsFixed(1)} điểm',
                           impactColor: Colors.red,
                         ),
                         _buildCalculationRow(
@@ -615,9 +586,9 @@ void _showHealthCalculationDetails(
 
                       const Divider(height: 32),
                       _buildCalculationRow(
-                        'final score',
-                        '100 - total impact',
-                        impact: '= ${finalScore.toStringAsFixed(1)} points',
+                        'điểm còn lại',
+                        '100 - điểm tiêu hao',
+                        impact: '= ${finalScore.toStringAsFixed(1)} điểm',
                         impactColor: Colors.green,
                       ),
 
@@ -683,7 +654,7 @@ Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
             Column(
               children: [
                 Text(
-                  'Total Screen Time',
+                  'Tổng thời gian dùng',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
@@ -702,7 +673,7 @@ Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
             const SizedBox(width: 100),
             _buildStatItem(
               context,
-              'Apps Used',
+              'App ',
               '${homeViewModel.appUsageList.length}',
               Icons.apps,
             ),
@@ -742,12 +713,12 @@ Widget _buildTopAppsSection(BuildContext context, HomeViewModel homeViewModel) {
   if (homeViewModel.topApps.isEmpty) return const SizedBox.shrink();
 
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'top apps',
+          'Các ứng dụng',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -823,7 +794,6 @@ Widget _buildAppUsageTile(
   );
 }
 
-/// Build app icon widget - real icon or fallback to material icon
 Widget _buildAppIcon(AppUsageInfo app, Color fallbackColor) {
   if (app.hasIcon && app.iconBytes != null) {
     return ClipRRect(
@@ -834,7 +804,6 @@ Widget _buildAppIcon(AppUsageInfo app, Color fallbackColor) {
         height: 32,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          // Fallback to material icon if image fails
           return Icon(
             _getAppIcon(app.packageName),
             color: fallbackColor,
@@ -844,7 +813,6 @@ Widget _buildAppIcon(AppUsageInfo app, Color fallbackColor) {
       ),
     );
   } else {
-    // Fallback to material icon
     return Icon(_getAppIcon(app.packageName), color: fallbackColor, size: 24);
   }
 }
@@ -868,10 +836,9 @@ IconData _getAppIcon(String packageName) {
   return iconMap[packageName] ?? Icons.apps;
 }
 
-// Get mood image based on score
 String _getMoodImage(double score) {
-  if (score >= 80) return 'assets/images/vui.png'; // 100-80: Vui
-  if (score >= 60) return 'assets/images/suynghi.png'; // 79-60: Suy nghĩ
-  if (score >= 30) return 'assets/images/cangthang.png'; // 59-30: Căng thẳng
-  return 'assets/images/buonngu.png'; // 29-0: Buồn ngủ
+  if (score >= 80) return 'assets/images/vui.png';
+  if (score >= 60) return 'assets/images/suynghi.png';
+  if (score >= 30) return 'assets/images/cangthang.png';
+  return 'assets/images/buonngu.png';
 }

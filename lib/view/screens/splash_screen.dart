@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/routes/app_routes.dart';
+import '../../widgets/loading_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -74,15 +75,17 @@ class _SplashScreenState extends State<SplashScreen>
               // ),
               // const SizedBox(height: 16),
               Text(
-                'Loading...',
+                'Đợi chút nhé...',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.black,
                 ),
               ),
               const SizedBox(height: 32),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              const SpinKitFadingCircle(
+                color: Colors.orange,
+                size: 48,
               ),
+
             ],
           ),
         ),

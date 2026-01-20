@@ -34,7 +34,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       backgroundColor: const Color(0xFFFFE4B5),
       appBar: AppBar(
         title: const Text(
-          'brainrot calendar',
+          'lịch theo dõi',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFE4B5),
@@ -56,7 +56,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           child: Column(
             children: [
-              // Month navigation
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -141,9 +140,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
 
-              // Monthly summary
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
                     const Text(
@@ -208,7 +206,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
-        childAspectRatio: 0.6, // Làm ô dài hơn theo chiều dọc
+        childAspectRatio: 0.8,
         crossAxisSpacing: 4,
         mainAxisSpacing: 4,
       ),
@@ -269,16 +267,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             maxWidth: constraints.maxWidth * 0.7,
                             maxHeight: constraints.maxHeight * 0.6,
                           ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: AspectRatio(
@@ -302,7 +290,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     if (!hasActivity)
                       Flexible(
                         flex: 2,
-                        child: Container(), // Empty placeholder
+                        child: Container(),
                       ),
                   ],
                 ),
