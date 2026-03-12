@@ -1,8 +1,6 @@
-// lib/screens/settings/settings_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../view_model/app_view_model.dart';
 import 'package:brainrot/generated/l10n.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,147 +10,133 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+
   @override
   Widget build(BuildContext context) {
     final t = S.of(context);
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFE4B5),
       appBar: AppBar(
         title: Text(
-          t.settings, // 'settings'
+          "Settings",
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFE4B5),
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ------- Screen time goal --------
-            Text(
-              t.screenTimeGoal,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
             const SizedBox(height: 30),
-            Consumer<AppViewModel>(
-              builder: (context, appVM, _) {
-                final isVI = appVM.locale.languageCode == 'vi';
-                return Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.language, // 'Language'
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              t.changeLanguage, // 'Change app language'
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      FilledButton(
-                        onPressed: appVM.toggleLocale,
-                        child: Text(
-                          // Nút ghi "Switch to English/Tiếng Việt"
-                          isVI ? t.english : t.vietnamese,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+            _buildSettingsItem(
+              "Help & Support",
+              () => _showComingSoon(context, "Support"),
+              icon: Icons.settings,
             ),
-
-            const SizedBox(height: 30),
-            Text(
-              t.supportFeedback,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            const SizedBox(height: 10),
+            _buildSettingsItem(
+              "Language",
+              () => _showComingSoon(context,"Language"),
+              icon: Icons.language,
+            ),
+            const SizedBox(height: 10),
+            _buildSettingsItem(
+              "Review",
+              () => _showComingSoon(context, "Review"),
+              icon: Icons.star_outline,
+            ),
+            const SizedBox(height: 10),
+            _buildSettingsItem(
+              "Contact Us",
+              () => _showComingSoon(context, "Contact Us"),
+              icon: Icons.email_outlined,
             ),
             const SizedBox(height: 15),
             _buildSettingsItem(
-              t.helpSupport,
-              Colors.blue,
-              () => _showComingSoon(context, t.helpSupport),
+              "privacyPolicy",
+              () => _showComingSoon(context, "privacyPolicy"),
+              icon: Icons.privacy_tip_outlined,
             ),
             const SizedBox(height: 10),
             _buildSettingsItem(
-              t.featureRequests,
-              Colors.orange,
-              () => _showComingSoon(context, t.featureRequests),
+              "Quan sát xung quanh",
+                  () => _showComingSoon(context, "privacyPolicy"),
+              icon: Icons.privacy_tip_outlined,
             ),
             const SizedBox(height: 10),
             _buildSettingsItem(
-              t.leaveReview,
-              Colors.amber,
-              () => _showComingSoon(context, t.leaveReview),
-            ),
-            const SizedBox(height: 10),
-            _buildSettingsItem(
-              t.contactUs,
-              Colors.green,
-              () => _showComingSoon(context, t.contactUs),
-            ),
-            const SizedBox(height: 15),
-            _buildSettingsItem(
-              t.privacyPolicy,
-              Colors.purple,
-              () => _showComingSoon(context, t.privacyPolicy),
+              "Chế độ đi ngủ ",
+                  () => _showComingSoon(context, "privacyPolicy"),
+              icon: Icons.privacy_tip_outlined,
             ),
             const SizedBox(height: 30),
 
-            Center(
-              child: Text(
-                t.appVersion,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              ),
-            ),
+            // Center(
+            //   child: Text(
+            //     t.appVersion,
+            //     style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            //   ),
+            // ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSettingsItem(String title, Color color, VoidCallback onTap) {
+  Widget _buildSettingsItem(String title, VoidCallback onTap, {IconData? icon}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.8),
           borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            const SizedBox(width: 12),
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                child: Icon(icon, size: 20),
+              ),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );
@@ -161,17 +145,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showComingSoon(BuildContext context, String feature) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(feature),
-            content: Text('$feature is coming soon! Stay tuned for updates.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(feature),
+        content: Text('$feature is coming soon! Stay tuned for updates.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
           ),
+        ],
+      ),
     );
   }
 }

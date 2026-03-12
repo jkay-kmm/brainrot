@@ -26,7 +26,6 @@ class PermissionService {
   Future<void> requestOverlayPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
-      debugPrint('📱 [PERMISSION] Overlay permission requested');
     } catch (e) {
       debugPrint('❌ [PERMISSION] Error requesting overlay permission: $e');
     }
@@ -49,7 +48,6 @@ class PermissionService {
   Future<void> requestAccessibilityPermission() async {
     try {
       await _channel.invokeMethod('requestAccessibilityPermission');
-      debugPrint('📱 [PERMISSION] Accessibility permission requested');
     } catch (e) {
       debugPrint(
         '❌ [PERMISSION] Error requesting accessibility permission: $e',
@@ -62,7 +60,6 @@ class PermissionService {
     try {
       final bool? success = await _channel.invokeMethod('startBlockingService');
       if (success == true) {
-        debugPrint('✅ [PERMISSION] Blocking service started');
       }
       return success ?? false;
     } catch (e) {
@@ -76,7 +73,6 @@ class PermissionService {
     try {
       final bool? success = await _channel.invokeMethod('stopBlockingService');
       if (success == true) {
-        debugPrint('✅ [PERMISSION] Blocking service stopped');
       }
       return success ?? false;
     } catch (e) {
@@ -98,11 +94,6 @@ class PermissionService {
 
   /// Request all required permissions
   Future<void> requestAllPermissions() async {
-    debugPrint(
-      '📱 [PERMISSION] Requesting all permissions for app blocking...',
-    );
-
-    // Request overlay permission
     if (!await hasOverlayPermission()) {
       await requestOverlayPermission();
     }

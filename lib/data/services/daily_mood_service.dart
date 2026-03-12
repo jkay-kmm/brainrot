@@ -11,32 +11,18 @@ class DailyMoodService {
 
   Box<DailyMood>? _moodBox;
 
-  /// Initialize Hive box for moods
   Future<void> initialize() async {
     try {
-      debugPrint('🎭 [MOOD] Initializing DailyMoodService...');
-      
-      // Register adapter if not already done
       if (!Hive.isAdapterRegistered(2)) {
         Hive.registerAdapter(DailyMoodAdapter());
       }
-
-      // Open box
       _moodBox = await Hive.openBox<DailyMood>(_moodBoxName);
-      
-      debugPrint('✅ [MOOD] DailyMoodService initialized');
-      debugPrint('📊 [MOOD] Found ${_moodBox!.length} mood records');
-      
-      // Clean up old data (keep last 365 days)
       await _cleanupOldData();
       
     } catch (e) {
-      debugPrint('❌ [MOOD] Error initializing: $e');
       rethrow;
     }
   }
-
-  /// Save mood state for a specific date
   Future<void> saveDailyMood(DateTime date, double score, {String? notes}) async {
     try {
       final mood = DailyMood.fromScore(
@@ -46,20 +32,15 @@ class DailyMoodService {
       );
 
       await _moodBox!.put(mood.dateKey, mood);
-      
-      debugPrint('💾 [MOOD] Saved mood for ${mood.dateKey}: ${mood.score} (${mood.moodCategory})');
     } catch (e) {
-      debugPrint('❌ [MOOD] Error saving mood: $e');
     }
   }
 
-  /// Get mood state for a specific date
   Future<DailyMood?> getDailyMood(DateTime date) async {
     try {
       final dateKey = _formatDateKey(date);
       return _moodBox!.get(dateKey);
     } catch (e) {
-      debugPrint('❌ [MOOD] Error getting mood: $e');
       return null;
     }
   }
@@ -272,10 +253,7 @@ class DailyMoodService {
         existingMood.updateScore(newScore);
         if (notes != null) existingMood.notes = notes;
         await existingMood.save();
-        
-        debugPrint('🔄 [MOOD] Updated mood for $dateKey: $newScore');
       } else {
-        // Create new if doesn't exist
         await saveDailyMood(date, newScore, notes: notes);
       }
     } catch (e) {
@@ -283,13 +261,11 @@ class DailyMoodService {
     }
   }
 
-  /// Delete mood for a specific date
   Future<void> deleteDailyMood(DateTime date) async {
     try {
       final dateKey = _formatDateKey(date);
       await _moodBox!.delete(dateKey);
-      
-      debugPrint('🗑️ [MOOD] Deleted mood for $dateKey');
+
     } catch (e) {
       debugPrint('❌ [MOOD] Error deleting mood: $e');
     }
@@ -299,7 +275,6 @@ class DailyMoodService {
   Future<void> clearAllData() async {
     try {
       await _moodBox!.clear();
-      debugPrint('🧹 [MOOD] Cleared all mood data');
     } catch (e) {
       debugPrint('❌ [MOOD] Error clearing mood data: $e');
     }
@@ -319,7 +294,6 @@ class DailyMoodService {
       
       if (keysToDelete.isNotEmpty) {
         await _moodBox!.deleteAll(keysToDelete);
-        debugPrint('🧹 [MOOD] Cleaned up ${keysToDelete.length} old mood records');
       }
     } catch (e) {
       debugPrint('❌ [MOOD] Error cleaning up old data: $e');
@@ -354,14 +328,10 @@ class DailyMoodService {
       };
     }
   }
-
-  /// Private helper methods
   String _formatDateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// Dispose resources
   void dispose() {
-    // Hive boxes are managed globally, no need to close here
   }
 }

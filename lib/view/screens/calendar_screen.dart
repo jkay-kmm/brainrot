@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/daily_mood_service.dart';
+import '../../generated/l10n.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -30,21 +31,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = S.of(context);
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFFE4B5),
       appBar: AppBar(
-        title: const Text(
-          'lịch theo dõi',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        title: Text(
+          "Calendar",
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFE4B5),
         elevation: 0,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.help_outline),
-        //     onPressed: () => _showHelpDialog(context),
-        //   ),
-        // ],
       ),
       body: SingleChildScrollView(
         child: ConstrainedBox(
@@ -106,31 +103,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ],
                 ),
               ),
-
-              // Calendar grid - Thay Expanded bằng Container với height cố định
               Container(
-                height: 400, // Đặt chiều cao cố định cho calendar grid
+                height: 400,
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Day headers
                     Row(
-                      children:
-                          ['s', 'm', 't', 'w', 'r', 'f', 's']
-                              .map(
-                                (day) => Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      day,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
+                      children: [
+                        "Sun",
+                        "Mon",
+                        "Tue",
+                        "Wed",
+                        "Thu",
+                        "Fri",
+                        "Sat",
+                      ]
+                          .map(
+                            (day) => Expanded(
+                              child: Center(
+                                child: Text(
+                                  day,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey,
+                                    fontSize: 13,
                                   ),
                                 ),
-                              )
-                              .toList(),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 10),
 
@@ -204,6 +207,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final daysInMonth = lastDayOfMonth.day;
 
     return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
         childAspectRatio: 0.8,
@@ -215,87 +220,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final dayNumber = index - firstWeekday + 1;
 
         if (dayNumber < 1 || dayNumber > daysInMonth) {
-          return Container(); // Empty cell
+          return const SizedBox.shrink(); // Empty cell - use const
         }
 
-        final isToday =
-            dayNumber == DateTime.now().day &&
-            selectedDate.month == DateTime.now().month &&
-            selectedDate.year == DateTime.now().year;
-
-        final dayDate = DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          dayNumber,
-        );
-        final moodImage = dailyMoods[_formatDateKey(dayDate)];
-        final hasActivity = moodImage != null;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(10),
-            border: isToday ? Border.all(color: Colors.orange, width: 2) : null,
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Số ngày
-                    Flexible(
-                      flex: 1,
-                      child: FittedBox(
-                        child: Text(
-                          dayNumber.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isToday ? Colors.orange : Colors.black,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Icon mood bên trong ô
-                    if (hasActivity)
-                      Flexible(
-                        flex: 2,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth * 0.7,
-                            maxHeight: constraints.maxHeight * 0.6,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: Image.asset(
-                                moodImage,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const FittedBox(
-                                    child: Icon(
-                                      Icons.sentiment_neutral,
-                                      color: Colors.grey,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!hasActivity)
-                      Flexible(
-                        flex: 2,
-                        child: Container(),
-                      ),
-                  ],
-                ),
-              );
-            },
+        return RepaintBoundary(
+          child: _CalendarDayCell(
+            dayNumber: dayNumber,
+            selectedDate: selectedDate,
+            dailyMoods: dailyMoods,
           ),
         );
       },
@@ -364,9 +296,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         }
       }
 
-      setState(() {
-        dailyMoods = monthMoods;
-      });
+      if (mounted) {
+        setState(() {
+          dailyMoods = monthMoods;
+        });
+      }
     } catch (e) {
       print('Error loading month data: $e');
     }
@@ -377,8 +311,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   String _formatDuration(double score) {
-    // Convert score back to approximate usage time for display
-    // This is a rough estimate for display purposes
+
     if (score == 0) return '0m';
 
     final hours = ((100 - score) / 10).floor();
@@ -393,40 +326,86 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   String _getMonthYear(DateTime date) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+      'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
     ];
-    return '${months[date.month - 1]} ${date.year}';
+    return months[date.month - 1];
+  }
+}
+
+// Separate widget for calendar day cell - optimize rebuilds
+class _CalendarDayCell extends StatelessWidget {
+  final int dayNumber;
+  final DateTime selectedDate;
+  final Map<String, String> dailyMoods;
+
+  const _CalendarDayCell({
+    required this.dayNumber,
+    required this.selectedDate,
+    required this.dailyMoods,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isToday = dayNumber == now.day &&
+        selectedDate.month == now.month &&
+        selectedDate.year == now.year;
+
+    final dayDate = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      dayNumber,
+    );
+    final moodImage = dailyMoods[_formatDateKey(dayDate)];
+    final hasActivity = moodImage != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(10),
+        border: isToday ? Border.all(color: Colors.orange, width: 2) : null,
+      ),
+      padding: const EdgeInsets.all(4.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Day number
+          Text(
+            dayNumber.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isToday ? Colors.orange : Colors.black,
+              fontSize: 13,
+            ),
+          ),
+          // Mood icon
+          if (hasActivity) ...[
+            const SizedBox(height: 2),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  moodImage,
+                  fit: BoxFit.cover,
+                  cacheWidth: 60, // Cache smaller size for performance
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.sentiment_neutral,
+                      color: Colors.grey,
+                      size: 20,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Calendar Help'),
-            content: const Text(
-              'This calendar shows your daily brain rot activity. '
-              'Days with activity are marked with mood indicators. '
-              'The monthly summary shows your total and average usage.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Got it!'),
-              ),
-            ],
-          ),
-    );
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

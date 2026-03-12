@@ -1,13 +1,11 @@
 import 'package:brainrot/widgets/calendar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../view_model/app_view_model.dart';
 import '../../view_model/home_view_model.dart';
 import '../../data/model/app_usage_info.dart';
-import '../../core/routes/app_routes.dart';
+
 import '../../widgets/loading_page.dart';
+import '../../generated/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,139 +14,87 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  late HomeViewModel homeViewModel;
-
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    homeViewModel = HomeViewModel();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Load data only on first time, not every time screen appears
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      homeViewModel.loadTodayUsage();
+      final homeViewModel = context.read<HomeViewModel>();
+      // Only load if data is empty
+      if (homeViewModel.appUsageList.isEmpty) {
+        homeViewModel.loadTodayUsage();
+      }
     });
   }
 
   @override
   void dispose() {
-    homeViewModel.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Refresh data silently when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      final homeViewModel = context.read<HomeViewModel>();
+      homeViewModel.silentRefresh();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: homeViewModel,
-      child: Scaffold(
-        backgroundColor: Color(0xFFFFE4B5),
-        appBar: AppBar(
-          toolbarHeight: 0,
-          title: const Text(
-            'brainrot',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          actions: [
-            // Today Calendar Button
-            TextButton.icon(
-              onPressed: () => _showTodayCalendar(context),
-              icon: const Icon(
-                Icons.calendar_today,
-                color: Colors.black,
-                size: 20,
-              ),
-              label: const Text(
-                'today',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                backgroundColor: Colors.white.withOpacity(0.8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
+    final t = S.of(context);
+
+    return Consumer<HomeViewModel>(
+      builder: (context, homeViewModel, _) {
+        return Scaffold(
+          backgroundColor: Color(0xFFFFE4B5),
+          appBar: AppBar(
+            toolbarHeight: 0,
+            title: const Text(
+              'brainrot',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        body: Consumer<HomeViewModel>(
-          builder: (context, homeViewModel, child) {
-            if (homeViewModel.isLoading) {
-              return  Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SpinKitFadingCircle(
-                      color: Colors.orange,
-                      size: 48,
-                    ),
-                    SizedBox(height: 16),
-                    Text('Đang tải dữ liệu sử dụng ứng dụng...'),
-                  ],
+            actions: [
+              // Today Calendar Button
+              TextButton.icon(
+                onPressed: () => _showTodayCalendar(context),
+                icon: const Icon(
+                  Icons.calendar_today,
+                  color: Colors.black,
+                  size: 20,
                 ),
-              );
-            }
-
-            if (homeViewModel.errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      homeViewModel.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => homeViewModel.refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
+                label: Text(
+                  "hihi",
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => homeViewModel.refresh(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildWelcomeSection(context, homeViewModel),
-                    Divider(
-                      thickness: 1,
-                      color: Colors.black12,
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                    _buildUsageOverview(context, homeViewModel),
-                    Divider(
-                      thickness: 1,
-                      color: Colors.black12,
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-
-                    _buildTopAppsSection(context, homeViewModel),
-                    const SizedBox(height: 24),
-                  ],
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  backgroundColor: Colors.white.withOpacity(0.8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
-            );
-          },
-        ),
-      ),
+              const SizedBox(width: 16),
+            ],
+          ),
+          body: _HomeBody(homeViewModel: homeViewModel),
+        );
+      },
     );
   }
 
@@ -168,33 +114,99 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatSelectedDate(DateTime date) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+}
 
-    final dayName = days[date.weekday - 1];
-    final monthName = months[date.month - 1];
+// Separate widget for body to optimize rebuilds
+class _HomeBody extends StatelessWidget {
+  final HomeViewModel homeViewModel;
 
-    return '$dayName, $monthName ${date.day}, ${date.year}';
+  const _HomeBody({required this.homeViewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HomeViewModel>(
+      builder: (context, vm, child) {
+        // Only rebuild when loading/error state changes
+        if (vm.isLoading) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SpinKitFadingCircle(
+                  color: Colors.orange,
+                  size: 48,
+                ),
+                SizedBox(height: 16),
+                Text('Loading app usage data...'),
+              ],
+            ),
+          );
+        }
+
+        if (vm.errorMessage != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  vm.errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => vm.refresh(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return child!;
+      },
+      child: RefreshIndicator(
+        onRefresh: () => homeViewModel.refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Consumer<HomeViewModel>(
+                builder: (context, vm, _) => _buildWelcomeSection(context, vm),
+              ),
+              const Divider(
+                thickness: 1,
+                color: Colors.black12,
+                indent: 16,
+                endIndent: 16,
+              ),
+              Consumer<HomeViewModel>(
+                builder: (context, vm, _) => _buildUsageOverview(context, vm),
+              ),
+              const Divider(
+                thickness: 1,
+                color: Colors.black12,
+                indent: 16,
+                endIndent: 16,
+              ),
+              Consumer<HomeViewModel>(
+                builder: (context, vm, _) => _buildTopAppsSection(context, vm),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -203,9 +215,9 @@ Widget _buildWelcomeSection(BuildContext context, HomeViewModel homeViewModel) {
 }
 
 Widget _buildBrainHealthCalculation(
-  BuildContext context,
-  HomeViewModel homeViewModel,
-) {
+    BuildContext context,
+    HomeViewModel homeViewModel,
+    ) {
   final finalScore = homeViewModel.currentScore;
   final totalMinutes = homeViewModel.totalUsage.inMinutes;
   final goalMinutes = 120;
@@ -305,7 +317,7 @@ Widget _buildBrainHealthCalculation(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Điểm số sẽ đặt lại về 100 vào lúc nửa đêm.',
+            'Your score will reset to 100 at midnight.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
@@ -316,12 +328,12 @@ Widget _buildBrainHealthCalculation(
           GestureDetector(
             onTap:
                 () => _showHealthCalculationDetails(
-                  context,
-                  homeViewModel,
-                  totalMinutes,
-                  goalMinutes,
-                  finalScore,
-                ),
+              context,
+              homeViewModel,
+              totalMinutes,
+              goalMinutes,
+              finalScore,
+            ),
             child: const Icon(Icons.help_outline, size: 20, color: Colors.grey),
           ),
         ],
@@ -332,12 +344,12 @@ Widget _buildBrainHealthCalculation(
 }
 
 void _showHealthCalculationDetails(
-  BuildContext context,
-  HomeViewModel homeViewModel,
-  int totalMinutes,
-  int goalMinutes,
-  double finalScore,
-) {
+    BuildContext context,
+    HomeViewModel homeViewModel,
+    int totalMinutes,
+    int goalMinutes,
+    double finalScore,
+    ) {
   double preGoalImpact = 0.0;
   double postGoalImpact = 0.0;
 
@@ -380,8 +392,6 @@ void _showHealthCalculationDetails(
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Title with mood image
               Row(
                 children: [
                   Container(
@@ -439,7 +449,7 @@ void _showHealthCalculationDetails(
                       children: [
                         Center(
                           child: Text(
-                            'Cách tính sức khỏe não',
+                            'Brain Health Calculation',
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -451,7 +461,7 @@ void _showHealthCalculationDetails(
               ),
               const SizedBox(height: 8),
               Text(
-                'Điểm sức khỏe não bộ của bạn bắt đầu từ 100 điểm mỗi ngày vào lúc nửa đêm và giảm dần dựa trên thời gian sử dụng thiết bị điện tử.',
+                'Your brain health score starts at 100 every day at midnight and decreases based on your device usage time.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -479,17 +489,6 @@ void _showHealthCalculationDetails(
                               width: 80,
                               height: 80,
                               margin: const EdgeInsets.only(bottom: 12),
-                              // decoration: BoxDecoration(
-                              //   borderRadius: BorderRadius.circular(40),
-                              //   boxShadow: [
-                              //     BoxShadow(
-                              //       color: _getScoreColor(
-                              //         finalScore,
-                              //       ).withOpacity(0.3),
-                              //       blurRadius: 10,
-                              //     ),
-                              //   ],
-                              // ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(40),
                                 child: Image.asset(
@@ -506,17 +505,17 @@ void _showHealthCalculationDetails(
                                         height: 80,
                                         fit: BoxFit.cover,
                                         errorBuilder: (
-                                          context,
-                                          error2,
-                                          stackTrace2,
-                                        ) {
+                                            context,
+                                            error2,
+                                            stackTrace2,
+                                            ) {
                                           return Container(
                                             width: 80,
                                             height: 80,
                                             decoration: BoxDecoration(
                                               color: Colors.orange[200],
                                               borderRadius:
-                                                  BorderRadius.circular(40),
+                                              BorderRadius.circular(40),
                                             ),
                                             child: const Icon(
                                               Icons.psychology,
@@ -532,7 +531,7 @@ void _showHealthCalculationDetails(
                               ),
                             ),
                             Text(
-                              'Điểm hiện tại',
+                              'Current Score',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -551,44 +550,44 @@ void _showHealthCalculationDetails(
                       ),
                       const SizedBox(height: 24),
                       _buildCalculationRow(
-                        'thời gian ước tính',
-                        '${totalMinutes} phút (${(totalMinutes / 60).toStringAsFixed(1)} giờ)',
+                        'estimated usage time',
+                        '${totalMinutes} minutes (${(totalMinutes / 60).toStringAsFixed(1)} giờ)',
                       ),
                       _buildCalculationRow(
-                        'mục tiêu',
-                        '$goalMinutes phút (${(goalMinutes / 60).toStringAsFixed(1)} giờ)',
+                        'daily goal',
+                        '$goalMinutes minutes (${(goalMinutes / 60).toStringAsFixed(1)} hrs)',
                       ),
 
                       const SizedBox(height: 16),
 
                       if (totalMinutes <= goalMinutes) ...[
                         _buildCalculationRow(
-                          'điểm tiêu hao',
-                          '${(totalMinutes / 60).toStringAsFixed(1)} giờ * ${(preGoalImpact / (totalMinutes / 60)).toStringAsFixed(1)}/hr',
-                          impact: '-${preGoalImpact.toStringAsFixed(1)} điểm',
+                          'score deduction',
+                          '${(totalMinutes / 60).toStringAsFixed(1)} hrs * ${(preGoalImpact / (totalMinutes / 60)).toStringAsFixed(1)}/hr',
+                          impact: '-${preGoalImpact.toStringAsFixed(1)} points',
                           impactColor: Colors.red,
                         ),
                       ] else ...[
                         _buildCalculationRow(
-                          'pre-goal impact',
-                          '${(goalMinutes / 60).toStringAsFixed(1)} giờ * 5.0/giờ',
-                          impact: '-${preGoalImpact.toStringAsFixed(1)} điểm',
+                          'usage before goal',
+                          '${(goalMinutes / 60).toStringAsFixed(1)} hrs * 5.0/h',
+                          impact: '-${preGoalImpact.toStringAsFixed(1)} point',
                           impactColor: Colors.red,
                         ),
                         _buildCalculationRow(
-                          'post-goal impact',
+                          'usage after goal',
                           '${((totalMinutes - goalMinutes) / 60).toStringAsFixed(1)} hrs * 20.0/hr',
                           impact:
-                              '-${postGoalImpact.toStringAsFixed(1)} points',
+                          '-${postGoalImpact.toStringAsFixed(1)} points',
                           impactColor: Colors.red,
                         ),
                       ],
 
                       const Divider(height: 32),
                       _buildCalculationRow(
-                        'điểm còn lại',
-                        '100 - điểm tiêu hao',
-                        impact: '= ${finalScore.toStringAsFixed(1)} điểm',
+                        'remaining score',
+                        '100 - remaining score',
+                        impact: '= ${finalScore.toStringAsFixed(1)} point',
                         impactColor: Colors.green,
                       ),
 
@@ -606,11 +605,11 @@ void _showHealthCalculationDetails(
 }
 
 Widget _buildCalculationRow(
-  String label,
-  String value, {
-  String? impact,
-  Color? impactColor,
-}) {
+    String label,
+    String value, {
+      String? impact,
+      Color? impactColor,
+    }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
@@ -643,6 +642,8 @@ Color _getScoreColor(double score) {
 }
 
 Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
+  final t = S.of(context);
+
   return Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -654,12 +655,11 @@ Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
             Column(
               children: [
                 Text(
-                  'Tổng thời gian dùng',
+                  "Total Screen Time",
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                 ),
-                // const SizedBox(height: 4),
                 Text(
                   homeViewModel.formattedTotalUsage,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -673,7 +673,7 @@ Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
             const SizedBox(width: 100),
             _buildStatItem(
               context,
-              'App ',
+              "Apps",
               '${homeViewModel.appUsageList.length}',
               Icons.apps,
             ),
@@ -685,11 +685,11 @@ Widget _buildUsageOverview(BuildContext context, HomeViewModel homeViewModel) {
 }
 
 Widget _buildStatItem(
-  BuildContext context,
-  String label,
-  String value,
-  IconData icon,
-) {
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    ) {
   return Column(
     children: [
       Text(
@@ -718,7 +718,7 @@ Widget _buildTopAppsSection(BuildContext context, HomeViewModel homeViewModel) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Các ứng dụng',
+          'Applications',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -729,17 +729,17 @@ Widget _buildTopAppsSection(BuildContext context, HomeViewModel homeViewModel) {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: homeViewModel.topApps.length,
-          itemBuilder:
-              (context, index) => _buildAppUsageTile(
-                context,
-                homeViewModel.topApps[index],
-                homeViewModel,
-              ),
-          separatorBuilder:
-              (context, index) => const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Divider(thickness: 1, color: Colors.black12),
-              ),
+          itemBuilder: (context, index) => RepaintBoundary(
+            child: _buildAppUsageTile(
+              context,
+              homeViewModel.topApps[index],
+              homeViewModel,
+            ),
+          ),
+          separatorBuilder: (context, index) => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Divider(thickness: 1, color: Colors.black12),
+          ),
         ),
       ],
     ),
@@ -747,10 +747,10 @@ Widget _buildTopAppsSection(BuildContext context, HomeViewModel homeViewModel) {
 }
 
 Widget _buildAppUsageTile(
-  BuildContext context,
-  AppUsageInfo app,
-  HomeViewModel homeViewModel,
-) {
+    BuildContext context,
+    AppUsageInfo app,
+    HomeViewModel homeViewModel,
+    ) {
   final color = homeViewModel.getUsageColor(app);
 
   return Padding(
@@ -768,17 +768,12 @@ Widget _buildAppUsageTile(
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                app.appName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          child: Text(
+            app.appName,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
         const SizedBox(width: 16),

@@ -10,4 +10,6 @@
     <string name="notification_channel_description">Notifications for app blocking service</string>
     <string name="notification_service_title">App Blocking Active</string>
     <string name="notification_service_content">Monitoring and blocking apps according to your rules</string>
+    <string name="widget_name">Brainrot Tracker</string>
+    <string name="widget_description">Track your daily screen time and brain health score</string>
 </resources>

@@ -5,11 +5,13 @@ import '../data/model/app_usage_info.dart';
 import '../data/services/real_app_usage_service.dart';
 import '../data/services/daily_mood_service.dart';
 import '../data/services/app_icon_service.dart';
+import '../data/services/widget_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final RealAppUsageService _appUsageService = RealAppUsageService();
   final DailyMoodService _moodService = DailyMoodService();
   final AppIconService _iconService = AppIconService();
+  final WidgetService _widgetService = WidgetService();
 
   List<AppUsageInfo> _appUsageList = [];
   bool _isLoading = false;
@@ -18,6 +20,11 @@ class HomeViewModel extends ChangeNotifier {
   double _currentScore = 100.0;
   DateTime _lastResetDate = DateTime.now();
 
+  // Cached computed values
+  List<AppUsageInfo>? _cachedTopApps;
+  Map<String, dynamic>? _cachedUsageStats;
+  String? _cachedFormattedUsage;
+
   // Getters
   List<AppUsageInfo> get appUsageList => _appUsageList;
   bool get isLoading => _isLoading;
@@ -25,26 +32,36 @@ class HomeViewModel extends ChangeNotifier {
   Duration get totalUsage => _totalUsage;
   double get currentScore => _currentScore;
 
-  // Get formatted total usage
+  // Get formatted total usage (cached)
   String get formattedTotalUsage {
+    if (_cachedFormattedUsage != null) return _cachedFormattedUsage!;
+
     final hours = _totalUsage.inHours;
     final minutes = _totalUsage.inMinutes.remainder(60);
 
-    if (hours > 0) {
-      return '${hours}giờ ${minutes} phút';
-    } else {
-      return '${minutes} phút';
-    }
+    _cachedFormattedUsage = hours > 0
+        ? '${hours}h ${minutes} m'
+        : '${minutes} m';
+    return _cachedFormattedUsage!;
   }
 
-  // Get top 5 most used apps
+  // Get top 5 most used apps (cached)
   List<AppUsageInfo> get topApps {
-    return _appUsageService.getTopUsedApps(_appUsageList, limit: 5);
+    _cachedTopApps ??= _appUsageService.getTopUsedApps(_appUsageList, limit: 5);
+    return _cachedTopApps!;
   }
 
-  // Get usage statistics
+  // Get usage statistics (cached)
   Map<String, dynamic> get usageStats {
-    return _appUsageService.getUsageStats(_appUsageList);
+    _cachedUsageStats ??= _appUsageService.getUsageStats(_appUsageList);
+    return _cachedUsageStats!;
+  }
+
+  // Invalidate caches when data changes
+  void _invalidateCaches() {
+    _cachedTopApps = null;
+    _cachedUsageStats = null;
+    _cachedFormattedUsage = null;
   }
 
   // Check if it's excessive screen time
@@ -162,14 +179,14 @@ class HomeViewModel extends ChangeNotifier {
   /// Load app usage data for a specific date range
   Future<void> loadUsageInRange(DateTime startTime, DateTime endTime) async {
     await _loadUsage(
-      () => _appUsageService.getUsageInRange(startTime, endTime),
+          () => _appUsageService.getUsageInRange(startTime, endTime),
     );
   }
 
   /// Generic method to load usage data
   Future<void> _loadUsage(
-    Future<List<AppUsageInfo>> Function() loadFunction,
-  ) async {
+      Future<List<AppUsageInfo>> Function() loadFunction,
+      ) async {
     try {
       _setLoading(true);
       _clearError();
@@ -191,8 +208,10 @@ class HomeViewModel extends ChangeNotifier {
       final usageList = await loadFunction();
       _appUsageList = usageList;
 
-      // Load icons after getting usage data
+      // Invalidate caches when data changes
+      _invalidateCaches();
 
+      // Load icons after getting usage data
       await loadAppIcons();
 
       // Calculate total usage
@@ -202,8 +221,14 @@ class HomeViewModel extends ChangeNotifier {
       }
 
       // Calculate and update current score based on usage
-      _currentScore = calculateBrainHealthScore();
-      await _saveCurrentScore();
+      final newScore = calculateBrainHealthScore();
+      if (_currentScore != newScore) {
+        _currentScore = newScore;
+        await _saveCurrentScore();
+      }
+
+      // ✅ Update widget với data mới
+      await _updateWidget();
 
       _clearError();
       notifyListeners();
@@ -211,6 +236,59 @@ class HomeViewModel extends ChangeNotifier {
       _setError('Failed to load usage data: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Silent refresh - update data without showing loading indicator
+  Future<void> silentRefresh() async {
+    try {
+      // Check and reset for new day first
+      await _checkAndResetForNewDay();
+
+      // Check permission
+      bool hasPermission = await _appUsageService.hasUsagePermission();
+      if (!hasPermission) return;
+
+      // Load usage data silently
+      final usageList = await _appUsageService.getTodayUsage();
+      _appUsageList = usageList;
+
+      // Invalidate caches when data changes
+      _invalidateCaches();
+
+      // Load icons
+      await loadAppIcons();
+
+      // Calculate total usage
+      _totalUsage = Duration.zero;
+      for (final app in _appUsageList) {
+        _totalUsage += app.usage;
+      }
+
+      // Calculate and update current score
+      final newScore = calculateBrainHealthScore();
+      if (_currentScore != newScore) {
+        _currentScore = newScore;
+        await _saveCurrentScore();
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Silent refresh error: $e');
+      // Don't show error to user on silent refresh
+    }
+  }
+
+  /// Update home screen widget
+  Future<void> _updateWidget() async {
+    try {
+      await _widgetService.updateWidget(
+        todayUsage: _totalUsage,
+        goal: const Duration(hours: 4), // Goal mặc định 4h
+        score: _currentScore,
+      );
+    } catch (e) {
+      debugPrint('Error updating widget: $e');
     }
   }
 
@@ -236,8 +314,10 @@ class HomeViewModel extends ChangeNotifier {
 
   // Helper methods
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      notifyListeners();
+    }
   }
 
   void _clearError() {
@@ -245,9 +325,11 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   void _setError(String error) {
-    _errorMessage = error;
-    _isLoading = false;
-    notifyListeners();
+    if (_errorMessage != error) {
+      _errorMessage = error;
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   double getUsagePercentage(AppUsageInfo app) {

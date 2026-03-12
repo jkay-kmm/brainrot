@@ -23,10 +23,8 @@ class AppUsageService {
   /// Get app usage data for today
   Future<List<AppUsageInfo>> getTodayUsage() async {
     try {
-      // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
-      
-      // Generate realistic mock data
+
       return _generateRealisticMockData();
     } catch (e) {
       print('Error getting today usage: $e');

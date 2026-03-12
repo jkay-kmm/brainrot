@@ -8,10 +8,9 @@ class RealAppUsageService {
   factory RealAppUsageService() => _instance;
   RealAppUsageService._internal();
 
-  /// Check if usage access permission is granted
   Future<bool> hasUsagePermission() async {
     try {
-    
+
       final bool? hasPermission = await _channel.invokeMethod('hasUsagePermission');
 
       return hasPermission ?? false;
@@ -24,12 +23,12 @@ class RealAppUsageService {
   /// Request usage access permission
   Future<bool> requestUsagePermission() async {
     try {
-   
+
       final bool? granted = await _channel.invokeMethod('requestUsagePermission');
-    
+
       return granted ?? false;
     } catch (e) {
-    
+
       return false;
     }
   }
@@ -37,18 +36,18 @@ class RealAppUsageService {
   /// Get app usage data for today FROM REAL DIGITAL WELLBEING
   Future<List<AppUsageInfo>> getTodayUsage() async {
     try {
-    
-      
+
+
       // Get current time info for debugging
       final timeInfo = await _channel.invokeMethod('getCurrentTimeInfo');
-    
-      
+
+
       // ALWAYS try to get real data first, regardless of permission
       final List<dynamic>? rawData = await _channel.invokeMethod('getUsageStats');
-     
-      
+
+
       if (rawData != null && rawData.isNotEmpty) {
-       
+
         // Convert raw data to AppUsageInfo objects
         List<AppUsageInfo> usageList = rawData.map((data) {
           final Map<String, dynamic> appData = Map<String, dynamic>.from(data);
@@ -62,34 +61,35 @@ class RealAppUsageService {
           );
         }).toList();
 
-        // Filter out apps with very short usage (less than 30 seconds)
-        usageList = usageList.where((app) => app.usage.inSeconds >= 30).toList();
-        
+        // Filter out apps with very short usage (less than 10 seconds)
+        // ✅ GIẢI PHÁP 3: Giảm threshold từ 30 giây xuống 10 giây
+        usageList = usageList.where((app) => app.usage.inSeconds >= 10).toList();
+
         // Sort by usage time (highest first)
         usageList.sort((a, b) => b.usage.compareTo(a.usage));
 
-      
+
         for (var app in usageList.take(5)) {
           debugPrint('   ${app.appName}: ${app.formattedUsage}');
         }
 
         return usageList;
       } else {
-      
-        
+
+
         // Check permission
         bool hasPermission = await hasUsagePermission();
         if (!hasPermission) {
-        
+
           await requestUsagePermission();
         }
-        
-       
+
+
         return _getFallbackData();
       }
-      
+
     } catch (e) {
-     
+
       return _getFallbackData();
     }
   }
@@ -97,19 +97,19 @@ class RealAppUsageService {
   /// Force refresh usage data (clears cache)
   Future<List<AppUsageInfo>> refreshTodayUsage() async {
     try {
-   
-      
+
+
       // Get current time info for debugging
       final timeInfo = await _channel.invokeMethod('getCurrentTimeInfo');
-    
-      
+
+
       // Call refresh method that clears cache
       final List<dynamic>? rawData = await _channel.invokeMethod('refreshUsageStats');
-   
-      
+
+
       if (rawData != null && rawData.isNotEmpty) {
-       
-        
+
+
         // Convert raw data to AppUsageInfo objects
         List<AppUsageInfo> usageList = rawData.map((data) {
           final Map<String, dynamic> appData = Map<String, dynamic>.from(data);
@@ -124,40 +124,38 @@ class RealAppUsageService {
         }).toList();
 
         // Filter and sort
-        usageList = usageList.where((app) => app.usage.inSeconds >= 30).toList();
+        // ✅ GIẢI PHÁP 3: Giảm threshold từ 30 giây xuống 10 giây
+        usageList = usageList.where((app) => app.usage.inSeconds >= 10).toList();
         usageList.sort((a, b) => b.usage.compareTo(a.usage));
 
-       
+
         for (var app in usageList.take(5)) {
           ('   ${app.appName}: ${app.formattedUsage}');
         }
 
         return usageList;
       } else {
-      
+
         return _getFallbackData();
       }
-      
+
     } catch (e) {
-      
+
       return _getFallbackData();
     }
   }
 
   /// Get app usage data for a specific date range
   Future<List<AppUsageInfo>> getUsageInRange(DateTime startTime, DateTime endTime) async {
-    debugPrint('🔄 [BRAINROT] Getting usage data for range: $startTime to $endTime');
-    // For now, just return today's usage
-    // In a real implementation, you'd modify the native method to accept date parameters
     return await getTodayUsage();
   }
 
   /// Fallback data for when real data is not available
   List<AppUsageInfo> _getFallbackData() {
-    debugPrint('🔄 [BRAINROT] Using fallback data (not real usage stats)');
+
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
-    
+
     return [
       AppUsageInfo(
         packageName: 'com.instagram.android',
@@ -217,7 +215,7 @@ class RealAppUsageService {
 
     final totalUsage = apps.fold<Duration>(
       Duration.zero,
-      (sum, app) => sum + app.usage,
+          (sum, app) => sum + app.usage,
     );
 
     final averageUsage = Duration(
@@ -225,7 +223,7 @@ class RealAppUsageService {
     );
 
     final mostUsedApp = apps.reduce(
-      (current, next) => current.usage > next.usage ? current : next,
+          (current, next) => current.usage > next.usage ? current : next,
     );
 
     return {

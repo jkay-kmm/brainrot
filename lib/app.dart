@@ -19,8 +19,8 @@ class BrainrotApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppViewModel()..loadSettings()),
+        ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => BlockingViewModel()..initialize()),
-        // Add more providers here as needed
       ],
       child: Consumer<AppViewModel>(
         builder: (context, appViewModel, child) {

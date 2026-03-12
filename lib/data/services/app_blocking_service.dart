@@ -50,32 +50,21 @@ class AppBlockingService {
   final RealAppUsageService _realUsageService = RealAppUsageService();
   final UsageHistoryService _historyService = UsageHistoryService();
 
-  // Timer for periodic checks
+
   Timer? _periodicTimer;
   Timer? _dailyResetTimer;
-
-  /// Initialize the service
   Future<void> initialize() async {
-    debugPrint('🔧 [BLOCKING] Initializing AppBlockingService...');
 
     await _loadRules();
     await _loadFocusModes();
     await _loadUsageTracking();
     await _loadLastResetDate();
-
-    // Check if we need to reset daily usage
     await _checkAndResetDailyUsage();
-
-    // Start periodic monitoring
     _startPeriodicMonitoring();
-    
-    // Start daily reset scheduler
-    _startDailyResetScheduler();
 
-    debugPrint('✅ [BLOCKING] AppBlockingService initialized');
+    _startDailyResetScheduler();
   }
 
-  /// Dispose resources
   void dispose() {
     _periodicTimer?.cancel();
     _dailyResetTimer?.cancel();
@@ -84,53 +73,34 @@ class AppBlockingService {
     _blockStatusController.close();
   }
 
-  // ============================================================================
-  // BLOCKING RULES MANAGEMENT
-  // ============================================================================
-
-  /// Get all blocking rules
   List<BlockingRule> get rules => List.unmodifiable(_rules);
-
-  /// Add a new blocking rule
   Future<void> addRule(BlockingRule rule) async {
-    debugPrint('➕ [BLOCKING] Adding rule: ${rule.name}');
-
     _rules.add(rule);
     await _saveRules();
     _rulesController.add(_rules);
-
-    // Update block status immediately
     await _updateBlockStatus();
   }
 
-  /// Update an existing rule
   Future<void> updateRule(BlockingRule updatedRule) async {
-    debugPrint('✏️ [BLOCKING] Updating rule: ${updatedRule.name}');
 
     final index = _rules.indexWhere((rule) => rule.id == updatedRule.id);
     if (index != -1) {
       _rules[index] = updatedRule.copyWith(updatedAt: DateTime.now());
       await _saveRules();
       _rulesController.add(_rules);
-
-      // Update block status immediately
       await _updateBlockStatus();
     }
   }
 
-  /// Delete a rule
   Future<void> deleteRule(String ruleId) async {
-    debugPrint('🗑️ [BLOCKING] Deleting rule: $ruleId');
 
     _rules.removeWhere((rule) => rule.id == ruleId);
     await _saveRules();
     _rulesController.add(_rules);
 
-    // Update block status immediately
     await _updateBlockStatus();
   }
 
-  /// Toggle rule active status
   Future<void> toggleRule(String ruleId) async {
     final rule = _rules.firstWhere((r) => r.id == ruleId);
     final newStatus =
@@ -140,15 +110,8 @@ class AppBlockingService {
 
     await updateRule(rule.copyWith(status: newStatus));
   }
-
-  // ============================================================================
-  // FOCUS MODES MANAGEMENT
-  // ============================================================================
-
-  /// Get all focus modes
   List<FocusMode> get focusModes => List.unmodifiable(_focusModes);
 
-  /// Get active focus mode
   FocusMode? get activeFocusMode {
     try {
       return _focusModes.firstWhere((mode) => mode.isActive);
@@ -157,18 +120,13 @@ class AppBlockingService {
     }
   }
 
-  /// Start a focus mode
   Future<void> startFocusMode(String focusModeId, {Duration? duration}) async {
-    debugPrint('🎯 [BLOCKING] Starting focus mode: $focusModeId');
-
-    // Deactivate all current focus modes
     for (int i = 0; i < _focusModes.length; i++) {
       if (_focusModes[i].isActive) {
         _focusModes[i] = _focusModes[i].copyWith(isActive: false);
       }
     }
 
-    // Activate the selected focus mode
     final index = _focusModes.indexWhere((mode) => mode.id == focusModeId);
     if (index != -1) {
       final now = DateTime.now();
@@ -181,15 +139,11 @@ class AppBlockingService {
 
       await _saveFocusModes();
       _focusModesController.add(_focusModes);
-
-      // Update block status immediately
       await _updateBlockStatus();
     }
   }
 
-  /// Stop the active focus mode
   Future<void> stopFocusMode() async {
-    debugPrint('⏹️ [BLOCKING] Stopping active focus mode');
 
     for (int i = 0; i < _focusModes.length; i++) {
       if (_focusModes[i].isActive) {
@@ -200,15 +154,9 @@ class AppBlockingService {
     await _saveFocusModes();
     _focusModesController.add(_focusModes);
 
-    // Update block status immediately
     await _updateBlockStatus();
   }
 
-  // ============================================================================
-  // BLOCKING STATUS CHECK
-  // ============================================================================
-
-  /// Check if an app should be blocked
   Future<AppBlockInfo> getAppBlockStatus(
     String packageName,
     String appName,
@@ -309,7 +257,6 @@ class AppBlockingService {
         usageData = await _mockUsageService.getTodayUsage();
       }
     } catch (e) {
-      debugPrint('⚠️ [BLOCKING] Error getting usage data: $e');
       usageData = await _mockUsageService.getTodayUsage();
     }
 
@@ -322,17 +269,10 @@ class AppBlockingService {
     return result;
   }
 
-  // ============================================================================
-  // USAGE TRACKING
-  // ============================================================================
-
-  /// Start tracking usage for an app
   void startAppSession(String packageName) {
     _sessionStartTimes[packageName] = DateTime.now();
-    debugPrint('▶️ [BLOCKING] Started session for $packageName');
   }
 
-  /// End tracking usage for an app
   void endAppSession(String packageName) {
     final startTime = _sessionStartTimes[packageName];
     if (startTime != null) {
@@ -347,35 +287,20 @@ class AppBlockingService {
           (_dailyUsageCache[packageName] ?? Duration.zero) + sessionDuration;
 
       _sessionStartTimes.remove(packageName);
-
-      debugPrint(
-        '⏹️ [BLOCKING] Ended session for $packageName (${sessionDuration.inMinutes}m)',
-      );
-
-      // Save usage data
       _saveUsageTracking();
     }
   }
 
-  /// Reset daily usage (called at midnight)
   Future<void> resetDailyUsage() async {
-    debugPrint('🔄 [BLOCKING] Resetting daily usage');
     _dailyUsageCache.clear();
     await _saveUsageTracking();
   }
 
-  /// Reset session usage
   void resetSessionUsage() {
-    debugPrint('🔄 [BLOCKING] Resetting session usage');
     _sessionUsageCache.clear();
     _sessionStartTimes.clear();
   }
 
-  // ============================================================================
-  // PRIVATE METHODS
-  // ============================================================================
-
-  /// Start periodic monitoring
   void _startPeriodicMonitoring() {
     _periodicTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _updateBlockStatus();
@@ -383,13 +308,11 @@ class AppBlockingService {
     });
   }
 
-  /// Update block status and notify listeners
   Future<void> _updateBlockStatus() async {
     final blockStatus = await getAllAppBlockStatus();
     _blockStatusController.add(blockStatus);
   }
 
-  /// Check if focus mode has expired
   void _checkFocusModeExpiry() {
     final activeFocus = activeFocusMode;
     if (activeFocus != null && activeFocus.endTime != null) {
@@ -399,16 +322,12 @@ class AppBlockingService {
     }
   }
 
-  /// Start daily reset scheduler
   void _startDailyResetScheduler() {
     // Calculate time until next midnight
     final now = DateTime.now();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final timeUntilMidnight = tomorrow.difference(now);
 
-    debugPrint('🕛 [BLOCKING] Next daily reset in ${timeUntilMidnight.inHours}h ${timeUntilMidnight.inMinutes % 60}m');
-
-    // Schedule first reset at midnight
     _dailyResetTimer = Timer(timeUntilMidnight, () {
       _performDailyReset();
       
@@ -421,26 +340,15 @@ class AppBlockingService {
 
   /// Perform daily reset at midnight
   Future<void> _performDailyReset() async {
-    debugPrint('🌙 [BLOCKING] Performing daily reset at midnight');
-    
-    // Save today's usage to history before reset
     try {
       await _historyService.saveTodayUsage();
-      debugPrint('📊 [BLOCKING] Saved usage history before reset');
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error saving usage history: $e');
     }
     
     await resetDailyUsage();
     await _saveLastResetDate(DateTime.now());
-    
-    // Update block status after reset
     await _updateBlockStatus();
-    
-    debugPrint('✅ [BLOCKING] Daily reset completed');
   }
-
-  /// Check if we need to reset daily usage (in case app was closed during midnight)
   Future<void> _checkAndResetDailyUsage() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -450,15 +358,10 @@ class AppBlockingService {
       await _saveLastResetDate(today);
       return;
     }
-    
     final lastResetDay = DateTime(_lastResetDate!.year, _lastResetDate!.month, _lastResetDate!.day);
-    
-    // If last reset was not today, reset daily usage
     if (lastResetDay.isBefore(today)) {
-      debugPrint('📅 [BLOCKING] Detected day change, resetting daily usage');
       await resetDailyUsage();
       await _saveLastResetDate(today);
-      debugPrint('✅ [BLOCKING] Daily usage reset for new day');
     }
   }
 
@@ -471,20 +374,14 @@ class AppBlockingService {
       if (rulesJson != null) {
         final List<dynamic> rulesList = jsonDecode(rulesJson);
         _rules = rulesList.map((json) => BlockingRule.fromJson(json)).toList();
-        debugPrint('📥 [BLOCKING] Loaded ${_rules.length} rules');
       } else {
-        // Load default rules
         _rules = _getDefaultRules();
         await _saveRules();
-        debugPrint('📥 [BLOCKING] Loaded default rules');
       }
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error loading rules: $e');
       _rules = _getDefaultRules();
     }
   }
-
-  /// Save rules to storage
   Future<void> _saveRules() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -492,13 +389,11 @@ class AppBlockingService {
         _rules.map((rule) => rule.toJson()).toList(),
       );
       await prefs.setString(_rulesKey, rulesJson);
-      debugPrint('💾 [BLOCKING] Saved ${_rules.length} rules');
     } catch (e) {
       debugPrint('❌ [BLOCKING] Error saving rules: $e');
     }
   }
 
-  /// Load focus modes from storage
   Future<void> _loadFocusModes() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -509,18 +404,14 @@ class AppBlockingService {
         _focusModes =
             focusModesList.map((json) => FocusMode.fromJson(json)).toList();
       } else {
-        // Load predefined focus modes
         _focusModes = List.from(FocusMode.predefinedModes);
         await _saveFocusModes();
       }
-      debugPrint('📥 [BLOCKING] Loaded ${_focusModes.length} focus modes');
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error loading focus modes: $e');
       _focusModes = List.from(FocusMode.predefinedModes);
     }
   }
 
-  /// Save focus modes to storage
   Future<void> _saveFocusModes() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -528,13 +419,10 @@ class AppBlockingService {
         _focusModes.map((mode) => mode.toJson()).toList(),
       );
       await prefs.setString(_focusModesKey, focusModesJson);
-      debugPrint('💾 [BLOCKING] Saved ${_focusModes.length} focus modes');
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error saving focus modes: $e');
     }
   }
 
-  /// Load usage tracking data
   Future<void> _loadUsageTracking() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -558,8 +446,6 @@ class AppBlockingService {
           (key, value) => MapEntry(key, Duration(milliseconds: value)),
         );
       }
-
-      debugPrint('📥 [BLOCKING] Loaded usage tracking data');
     } catch (e) {
       debugPrint('❌ [BLOCKING] Error loading usage tracking: $e');
     }
@@ -569,20 +455,14 @@ class AppBlockingService {
   Future<void> _saveUsageTracking() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
-      // Save daily usage
       final dailyUsageMap = _dailyUsageCache.map(
         (key, value) => MapEntry(key, value.inMilliseconds),
       );
       await prefs.setString(_dailyUsageKey, jsonEncode(dailyUsageMap));
-
-      // Save session usage
       final sessionUsageMap = _sessionUsageCache.map(
         (key, value) => MapEntry(key, value.inMilliseconds),
       );
       await prefs.setString(_sessionUsageKey, jsonEncode(sessionUsageMap));
-
-      debugPrint('💾 [BLOCKING] Saved usage tracking data');
     } catch (e) {
       debugPrint('❌ [BLOCKING] Error saving usage tracking: $e');
     }

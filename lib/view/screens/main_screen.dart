@@ -84,7 +84,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: t.home,
+                label: "Home",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -99,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: t.stats,
+                label: "Calendar",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -114,7 +114,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: t.blocking,
+                label: "Blocking",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -129,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: t.settings,
+                label: "Settings",
               ),
             ],
           ),

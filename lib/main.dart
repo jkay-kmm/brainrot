@@ -6,11 +6,9 @@ import 'app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Hive
+
   await Hive.initFlutter();
-  
-  // Initialize services
+
   final historyService = UsageHistoryService();
   await historyService.initialize();
   

@@ -65,15 +65,6 @@ class _SplashScreenState extends State<SplashScreen>
                 height: 560,
                 fit: BoxFit.contain,
               ),
-              // const SizedBox(height: 24),
-              // Text(
-              //   'Brainrot',
-              //   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              //     color: Colors.white,
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              // ),
-              // const SizedBox(height: 16),
               Text(
                 'Đợi chút nhé...',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(

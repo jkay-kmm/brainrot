@@ -22,10 +22,6 @@ dependencies:
 
   # images
   flutter_svg: ^2.2.1
-
-  # HTTP Requests
-  http: ^1.2.1
-  dio: ^5.4.1
   
   # Local Storage
   hive: ^2.2.3
@@ -43,6 +39,10 @@ dependencies:
   uuid: ^4.3.3
   lottie: ^3.3.1
   flutter_spinkit: ^5.2.2
+  
+  # Home Screen Widget
+  home_widget: ^0.6.0
+
 
 dev_dependencies:
   flutter_test:
@@ -68,10 +68,3 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
-
-flutter_intl:
-  enabled: true
-  class_name: S
-  main_locale: en
-  arb_dir: lib/l10n
-  output_dir: lib/generated

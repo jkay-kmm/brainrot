@@ -30,9 +30,6 @@ class UsageHistoryService {
   /// Initialize Hive and open boxes
   Future<void> initialize() async {
     try {
-      debugPrint('🗄️ [HISTORY] Initializing UsageHistoryService...');
-      
-      // Initialize Hive if not already done
       if (!Hive.isAdapterRegistered(0)) {
         Hive.registerAdapter(DailyUsageHistoryAdapter());
       }
@@ -40,18 +37,12 @@ class UsageHistoryService {
         Hive.registerAdapter(WeeklySummaryAdapter());
       }
 
-      // Open boxes
+
       _dailyHistoryBox = await Hive.openBox<DailyUsageHistory>(_dailyHistoryBoxName);
       _weeklySummaryBox = await Hive.openBox<WeeklySummary>(_weeklySummaryBoxName);
-
-      debugPrint('✅ [HISTORY] UsageHistoryService initialized');
-      debugPrint('📊 [HISTORY] Found ${_dailyHistoryBox!.length} daily records');
-      
-      // Clean up old data (keep last 90 days)
       await _cleanupOldData();
       
     } catch (e) {
-      debugPrint('❌ [HISTORY] Error initializing: $e');
       rethrow;
     }
   }
@@ -61,8 +52,6 @@ class UsageHistoryService {
     try {
       final today = DateTime.now();
       final todayKey = _getDayKey(today);
-      
-      debugPrint('💾 [HISTORY] Saving usage for $todayKey');
 
       // Get current app block status from blocking service
       final blockingService = AppBlockingService();
@@ -120,19 +109,10 @@ class UsageHistoryService {
         focusModeMinutes: focusModeMinutes,
       );
 
-      // Save to Hive
       await _dailyHistoryBox!.put(todayKey, dailyHistory);
-      
-      debugPrint('✅ [HISTORY] Saved daily usage: ${dailyHistory.formattedTotalScreenTime}');
-      
-      // Update weekly summary
       await _updateWeeklySummary(today);
-      
-      // Notify listeners
       _historyController.add(await getRecentHistory(30));
-      
     } catch (e) {
-      debugPrint('❌ [HISTORY] Error saving today usage: $e');
     }
   }
 
@@ -263,37 +243,29 @@ class UsageHistoryService {
         final key = _getWeekKey(weekStart);
         
         await _weeklySummaryBox!.put(key, weeklySummary);
-        debugPrint('✅ [HISTORY] Updated weekly summary for $key');
         
         // Notify listeners
         _weeklyController.add(weeklySummary);
       }
     } catch (e) {
-      debugPrint('❌ [HISTORY] Error updating weekly summary: $e');
+      print('❌ [HISTORY] Error updating weekly summary: $e');
     }
   }
 
-  /// Clean up old data (keep last 90 days)
   Future<void> _cleanupOldData() async {
     try {
       final cutoffDate = DateTime.now().subtract(const Duration(days: 90));
       final keysToDelete = <String>[];
-      
-      // Find old daily records
       for (final key in _dailyHistoryBox!.keys) {
         final date = DateTime.parse(key);
         if (date.isBefore(cutoffDate)) {
           keysToDelete.add(key);
         }
       }
-      
-      // Delete old records
       if (keysToDelete.isNotEmpty) {
         await _dailyHistoryBox!.deleteAll(keysToDelete);
-        debugPrint('🧹 [HISTORY] Cleaned up ${keysToDelete.length} old records');
       }
-      
-      // Clean up old weekly summaries (keep last 12 weeks)
+
       final weekCutoff = DateTime.now().subtract(const Duration(days: 84)); // 12 weeks
       final weekKeysToDelete = <String>[];
       
@@ -306,25 +278,20 @@ class UsageHistoryService {
       
       if (weekKeysToDelete.isNotEmpty) {
         await _weeklySummaryBox!.deleteAll(weekKeysToDelete);
-        debugPrint('🧹 [HISTORY] Cleaned up ${weekKeysToDelete.length} old weekly summaries');
       }
       
     } catch (e) {
-      debugPrint('❌ [HISTORY] Error cleaning up old data: $e');
     }
   }
 
-  /// Get day key for storage
   String _getDayKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// Get week key for storage
   String _getWeekKey(DateTime weekStart) {
     return _getDayKey(weekStart);
   }
 
-  /// Get week start date (Monday)
   DateTime _getWeekStart(DateTime date) {
     final weekday = date.weekday;
     return DateTime(date.year, date.month, date.day - (weekday - 1));

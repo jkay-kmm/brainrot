@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-/// Advanced caching system for app icons with persistent storage
 class AppIconCache {
   static final AppIconCache _instance = AppIconCache._internal();
   factory AppIconCache() => _instance;
@@ -11,28 +10,22 @@ class AppIconCache {
 
   static const String _cacheKeyPrefix = 'app_icon_cache_';
   static const String _cacheInfoKey = 'app_icon_cache_info';
-  static const int _maxCacheSize = 50; // Maximum number of icons to cache
-  static const int _cacheExpiryDays = 7; // Cache expires after 7 days
+  static const int _maxCacheSize = 50;
+  static const int _cacheExpiryDays = 7;
 
   final Map<String, Uint8List?> _memoryCache = {};
   SharedPreferences? _prefs;
 
-  /// Initialize cache
   Future<void> initialize() async {
     _prefs ??= await SharedPreferences.getInstance();
     await _loadCacheInfo();
     await _cleanExpiredCache();
   }
 
-  /// Get icon from cache (memory first, then disk)
   Future<Uint8List?> getIcon(String packageName) async {
-    // Check memory cache first
     if (_memoryCache.containsKey(packageName)) {
-      debugPrint('🎯 [CACHE] Memory hit for: $packageName');
       return _memoryCache[packageName];
     }
-
-    // Check disk cache
     await initialize();
     final cacheKey = _cacheKeyPrefix + packageName;
     final cachedData = _prefs!.getString(cacheKey);
@@ -42,46 +35,29 @@ class AppIconCache {
         final Map<String, dynamic> data = jsonDecode(cachedData);
         final timestamp = DateTime.parse(data['timestamp']);
 
-        // Check if cache is still valid
         if (DateTime.now().difference(timestamp).inDays < _cacheExpiryDays) {
           final iconBytes = base64Decode(data['iconData']);
           _memoryCache[packageName] = iconBytes;
-          debugPrint('💾 [CACHE] Disk hit for: $packageName');
           return iconBytes;
         } else {
-          // Cache expired, remove it
           await _removeFromDisk(packageName);
-          debugPrint('⏰ [CACHE] Expired cache removed for: $packageName');
         }
       } catch (e) {
-        debugPrint('❌ [CACHE] Error reading cache for $packageName: $e');
         await _removeFromDisk(packageName);
       }
     }
-
-    debugPrint('❌ [CACHE] Miss for: $packageName');
     return null;
   }
 
-  /// Store icon in cache (both memory and disk)
   Future<void> storeIcon(String packageName, Uint8List iconBytes) async {
     await initialize();
-
-    // Store in memory
     _memoryCache[packageName] = iconBytes;
-
-    // Store on disk
     await _storeToDisk(packageName, iconBytes);
-
-    // Clean cache if it's getting too big
     await _cleanCache();
 
-    debugPrint(
-      '💾 [CACHE] Stored icon for: $packageName (${iconBytes.length} bytes)',
-    );
+
   }
 
-  /// Store icon to disk
   Future<void> _storeToDisk(String packageName, Uint8List iconBytes) async {
     try {
       final cacheKey = _cacheKeyPrefix + packageName;
@@ -121,7 +97,6 @@ class AppIconCache {
       for (var entry in toRemove) {
         await _removeFromDisk(entry.key);
         _memoryCache.remove(entry.key);
-        debugPrint('🗑️ [CACHE] Removed old cache for: ${entry.key}');
       }
     }
   }
@@ -143,7 +118,6 @@ class AppIconCache {
 
   /// Load cache info from SharedPreferences
   Future<void> _loadCacheInfo() async {
-    // This method is called by _getCacheInfo, so we don't need to do anything here
   }
 
   /// Get cache info
