@@ -140,8 +140,12 @@ class HomeViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('current_score', _currentScore);
 
-    // Save mood state for today
-    await _moodService.saveDailyMood(DateTime.now(), _currentScore);
+    // Save mood state for today with actual usage time
+    await _moodService.saveDailyMood(
+      DateTime.now(), 
+      _currentScore,
+      totalUsageMinutes: _totalUsage.inMinutes,
+    );
   }
 
   /// Load icons cho tất cả apps
@@ -306,8 +310,12 @@ class HomeViewModel extends ChangeNotifier {
     await prefs.setString('last_reset_date', DateTime.now().toIso8601String());
     await prefs.setDouble('current_score', _currentScore);
 
-    // Save mood state for today with reset score
-    await _moodService.saveDailyMood(DateTime.now(), _currentScore);
+    // Save mood state for today with reset score and usage
+    await _moodService.saveDailyMood(
+      DateTime.now(), 
+      _currentScore,
+      totalUsageMinutes: _totalUsage.inMinutes,
+    );
 
     notifyListeners();
   }

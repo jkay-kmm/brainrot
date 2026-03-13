@@ -33,21 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const SizedBox(height: 30),
             _buildSettingsItem(
-              "Help & Support",
-              () => _showComingSoon(context, "Support"),
-              icon: Icons.settings,
-            ),
-            const SizedBox(height: 10),
-            _buildSettingsItem(
               "Language",
               () => _showComingSoon(context,"Language"),
               icon: Icons.language,
-            ),
-            const SizedBox(height: 10),
-            _buildSettingsItem(
-              "Review",
-              () => _showComingSoon(context, "Review"),
-              icon: Icons.star_outline,
             ),
             const SizedBox(height: 10),
             _buildSettingsItem(

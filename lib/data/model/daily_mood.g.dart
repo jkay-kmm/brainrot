@@ -22,13 +22,14 @@ class DailyMoodAdapter extends TypeAdapter<DailyMood> {
       moodImage: fields[2] as String,
       timestamp: fields[3] as DateTime,
       notes: fields[4] as String?,
+      totalUsageMinutes: fields[5] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, DailyMood obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.date)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class DailyMoodAdapter extends TypeAdapter<DailyMood> {
       ..writeByte(3)
       ..write(obj.timestamp)
       ..writeByte(4)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(5)
+      ..write(obj.totalUsageMinutes);
   }
 
   @override

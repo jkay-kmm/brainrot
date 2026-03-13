@@ -19,12 +19,16 @@ class DailyMood extends HiveObject {
   @HiveField(4)
   String? notes; // Optional notes for the day
 
+  @HiveField(5)
+  int? totalUsageMinutes; // Total screen time in minutes (from UsageStats)
+
   DailyMood({
     required this.date,
     required this.score,
     required this.moodImage,
     required this.timestamp,
     this.notes,
+    this.totalUsageMinutes,
   });
 
   /// Get mood category based on score

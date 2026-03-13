@@ -45,6 +45,9 @@ class AppBlockingService : Service() {
     private var focusModes = mutableListOf<FocusMode>()
     private var activeFocusMode: FocusMode? = null
     
+    private var lastRuleCount = 0
+    private var lastFocusModeCount = 0
+    
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "AppBlockingService created")
@@ -136,7 +139,12 @@ class AppBlockingService : Service() {
                 }
             }
             
-            Log.d(TAG, "Loaded ${blockingRules.size} rules and ${focusModes.size} focus modes")
+            // Only log if count changed
+            if (blockingRules.size != lastRuleCount || focusModes.size != lastFocusModeCount) {
+                Log.d(TAG, "Loaded ${blockingRules.size} rules and ${focusModes.size} focus modes")
+                lastRuleCount = blockingRules.size
+                lastFocusModeCount = focusModes.size
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading blocking data", e)
         }

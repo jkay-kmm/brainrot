@@ -6,7 +6,7 @@ import '../data/model/app_block_info.dart';
 
 class BlockingViewModel extends ChangeNotifier {
   final AppBlockingService _blockingService = AppBlockingService();
-  
+
   // State
   List<BlockingRule> _rules = [];
   List<FocusMode> _focusModes = [];
@@ -16,18 +16,37 @@ class BlockingViewModel extends ChangeNotifier {
 
   // Getters
   List<BlockingRule> get rules => _rules;
+
   List<FocusMode> get focusModes => _focusModes;
+
   Map<String, AppBlockInfo> get appBlockStatus => _appBlockStatus;
+
   bool get isLoading => _isLoading;
+
   String? get error => _error;
-  
+
   FocusMode? get activeFocusMode => _blockingService.activeFocusMode;
-  
+
   // Statistics
-  int get activeRulesCount => _rules.where((rule) => rule.isActive).length;
-  int get blockedAppsCount => _appBlockStatus.values.where((app) => app.isBlocked).length;
-  int get limitedAppsCount => _appBlockStatus.values.where((app) => app.isLimited).length;
-  int get allowedAppsCount => _appBlockStatus.values.where((app) => app.isAllowed).length;
+  int get activeRulesCount =>
+      _rules
+          .where((rule) => rule.isActive)
+          .length;
+
+  int get blockedAppsCount =>
+      _appBlockStatus.values
+          .where((app) => app.isBlocked)
+          .length;
+
+  int get limitedAppsCount =>
+      _appBlockStatus.values
+          .where((app) => app.isLimited)
+          .length;
+
+  int get allowedAppsCount =>
+      _appBlockStatus.values
+          .where((app) => app.isAllowed)
+          .length;
 
   /// Get time until next daily reset (midnight)
   Duration get timeUntilDailyReset {
@@ -48,29 +67,28 @@ class BlockingViewModel extends ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     _setError(null);
-    
+
     try {
       await _blockingService.initialize();
-      
+
       // Listen to streams
       _blockingService.rulesStream.listen((rules) {
         _rules = rules;
         notifyListeners();
       });
-      
+
       _blockingService.focusModesStream.listen((focusModes) {
         _focusModes = focusModes;
         notifyListeners();
       });
-      
+
       _blockingService.blockStatusStream.listen((blockStatus) {
         _appBlockStatus = blockStatus;
         notifyListeners();
       });
-      
+
       // Load initial data
       await _loadInitialData();
-      
     } catch (e) {
       _setError('Failed to initialize blocking service: $e');
       debugPrint('❌ [BLOCKING_VM] Error initializing: $e');
@@ -96,7 +114,7 @@ class BlockingViewModel extends ChangeNotifier {
   Future<void> refresh() async {
     _setLoading(true);
     _setError(null);
-    
+
     try {
       await _loadInitialData();
     } catch (e) {
@@ -268,7 +286,7 @@ class BlockingViewModel extends ChangeNotifier {
   double getBlockingEffectiveness() {
     final blockedApps = getAppsByStatus(AppBlockStatus.blocked);
     final totalApps = _appBlockStatus.length;
-    
+
     if (totalApps == 0) return 0.0;
     return (blockedApps.length / totalApps) * 100;
   }
@@ -287,24 +305,24 @@ class BlockingViewModel extends ChangeNotifier {
   /// Get daily usage summary
   Map<String, Duration> getDailyUsageSummary() {
     final summary = <String, Duration>{};
-    
+
     for (final app in _appBlockStatus.values) {
       if (app.dailyUsage != null) {
         summary[app.appName] = app.dailyUsage!;
       }
     }
-    
+
     return summary;
   }
 
   /// Get time saved today (estimated)
   Duration getTimeSavedToday() {
     Duration totalSaved = Duration.zero;
-    
+
     final blockedApps = getAppsByStatus(AppBlockStatus.blocked);
     // Estimate 30 minutes saved per blocked app (this could be more sophisticated)
     totalSaved = Duration(minutes: blockedApps.length * 30);
-    
+
     return totalSaved;
   }
 
@@ -334,54 +352,4 @@ class BlockingViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  // ============================================================================
-  // QUICK ACTIONS
-  // ============================================================================
-
-  /// Quick action: Block social media for 1 hour
-  Future<void> quickBlockSocialMedia() async {
-    try {
-      await startFocusMode('work', duration: const Duration(hours: 1));
-    } catch (e) {
-      _setError('Failed to start social media block: $e');
-    }
-  }
-
-  /// Quick action: Start study mode
-  Future<void> quickStartStudyMode() async {
-    try {
-      await startFocusMode('study', duration: const Duration(hours: 2));
-    } catch (e) {
-      _setError('Failed to start study mode: $e');
-    }
-  }
-
-  /// Quick action: Enable bedtime mode
-  Future<void> quickStartBedtimeMode() async {
-    try {
-      await startFocusMode('sleep', duration: const Duration(hours: 8));
-    } catch (e) {
-      _setError('Failed to start bedtime mode: $e');
-    }
-  }
-
-  /// Quick action: Disable all blocking
-  Future<void> quickDisableAllBlocking() async {
-    try {
-      // Stop focus mode
-      if (activeFocusMode != null) {
-        await stopFocusMode();
-      }
-      
-      // Disable all active rules
-      final activeRuleIds = activeRules.map((rule) => rule.id).toList();
-      for (final ruleId in activeRuleIds) {
-        await toggleRule(ruleId);
-      }
-      
-      debugPrint('✅ [BLOCKING_VM] All blocking disabled');
-    } catch (e) {
-      _setError('Failed to disable all blocking: $e');
-    }
-  }
 }

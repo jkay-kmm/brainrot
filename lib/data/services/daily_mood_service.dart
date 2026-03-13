@@ -23,13 +23,18 @@ class DailyMoodService {
       rethrow;
     }
   }
-  Future<void> saveDailyMood(DateTime date, double score, {String? notes}) async {
+  Future<void> saveDailyMood(DateTime date, double score, {String? notes, int? totalUsageMinutes}) async {
     try {
       final mood = DailyMood.fromScore(
         date: date,
         score: score,
         notes: notes,
       );
+      
+      // Add usage time if provided
+      if (totalUsageMinutes != null) {
+        mood.totalUsageMinutes = totalUsageMinutes;
+      }
 
       await _moodBox!.put(mood.dateKey, mood);
     } catch (e) {

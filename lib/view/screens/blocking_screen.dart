@@ -4,8 +4,7 @@ import '../../generated/l10n.dart';
 import '../../view_model/blocking_view_model.dart';
 import '../../data/services/permission_service.dart';
 import '../../data/model/blocking_rule.dart';
-import 'rule_creation_screen.dart';
-import 'permission_setup_screen.dart';
+
 
 class BlockingScreen extends StatefulWidget {
   const BlockingScreen({super.key});
@@ -54,17 +53,6 @@ class _BlockingScreenState extends State<BlockingScreen> {
             backgroundColor: const Color(0xFFFFE4B5),
             elevation: 0,
             actions: [
-              // Permission setup button
-              if (_permissionStatus?.allPermissionsGranted != true)
-                IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.red),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PermissionSetupScreen(),
-                    ),
-                  ),
-                ),
               IconButton(
                 icon: const Icon(Icons.help_outline),
                 onPressed: () => _showHelpDialog(context, t),
@@ -72,11 +60,6 @@ class _BlockingScreenState extends State<BlockingScreen> {
             ],
           ),
           body: _buildRulesTab(blockingVM, t),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showAddRuleDialog(),
-            backgroundColor: Colors.orange,
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
         );
       },
     );
@@ -318,26 +301,6 @@ class _BlockingScreenState extends State<BlockingScreen> {
       ),
     );
   }
-
-
-  void _showAddRuleDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFFE4B5),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: const RuleCreationScreen(),
-      ),
-    );
-  }
-
-
 
   void _showHelpDialog(BuildContext context, S t) {
     showDialog(

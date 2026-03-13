@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/daily_mood_service.dart';
+import '../../data/services/real_app_usage_service.dart';
 import '../../generated/l10n.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   final DailyMoodService _moodService = DailyMoodService();
   Map<String, dynamic> monthlyStats = {};
   Map<String, String> dailyMoods = {};
+  Map<int, double> weeklyUsageHours = {};
 
   @override
   void initState() {
@@ -44,16 +46,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight:
-                MediaQuery.of(context).size.height -
-                AppBar().preferredSize.height -
-                MediaQuery.of(context).padding.top,
-          ),
-          child: Column(
-            children: [
-              Padding(
+        child: Column(
+          children: [
+            Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 10,
@@ -104,7 +99,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
               Container(
-                height: 400,
+                height: 380,
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
@@ -143,57 +138,117 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
 
+              // Weekly Usage Chart
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'monthly rot summary',
+                      'Thời gian sử dụng (giờ)',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      padding: const EdgeInsets.all(15),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildSummaryItem(
-                              Icons.bar_chart,
-                              'total rot',
-                              _formatDuration(
-                                monthlyStats['totalScore']?.toDouble() ?? 0,
-                              ),
-                              Colors.blue,
-                            ),
-                          ),
-                          Expanded(
-                            child: _buildSummaryItem(
-                              Icons.access_time,
-                              'average daily r...',
-                              _formatDuration(
-                                monthlyStats['averageScore']?.toDouble() ?? 0,
-                              ),
-                              Colors.orange,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Hôm nay',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    _buildWeeklyChart(),
                   ],
                 ),
               ),
+
             ],
           ),
         ),
+      );
+  }
+
+  Widget _buildWeeklyChart() {
+    // Lấy 7 ngày gần nhất
+    final now = DateTime.now();
+    final weekData = <Map<String, dynamic>>[];
+    
+    for (int i = 6; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      final dayName = _getDayName(date.weekday);
+      final hours = weeklyUsageHours[date.day] ?? 0.0;
+      
+      weekData.add({
+        'day': dayName,
+        'hours': hours,
+        'isToday': i == 0,
+      });
+    }
+    
+    // Tìm giá trị max để scale
+    final maxHours = weekData.map((d) => d['hours'] as double).reduce((a, b) => a > b ? a : b);
+    final chartHeight = 150.0;
+    
+    return SizedBox(
+      height: chartHeight + 60,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: weekData.map((data) {
+          final hours = data['hours'] as double;
+          final isToday = data['isToday'] as bool;
+          final barHeight = maxHours > 0 ? (hours / maxHours) * chartHeight : 0.0;
+          
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // Giá trị giờ
+                  if (hours > 0)
+                    Text(
+                      hours.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  // Cột
+                  Container(
+                    width: double.infinity,
+                    height: barHeight.clamp(4.0, chartHeight),
+                    decoration: BoxDecoration(
+                      color: isToday ? Colors.orange : Colors.blue.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Tên ngày
+                  Text(
+                    data['day'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                      color: isToday ? Colors.orange : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
+  }
+
+  String _getDayName(int weekday) {
+    const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
+    return days[weekday % 7];
   }
 
   Widget _buildCalendarGrid() {
@@ -233,50 +288,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       },
     );
   }
-
-  Widget _buildSummaryItem(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Load mood data for the current month
   Future<void> _loadMonthData() async {
     try {
-      // Load monthly statistics
       monthlyStats = await _moodService.getMonthlyStats(
         selectedDate.year,
         selectedDate.month,
@@ -286,19 +299,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
       final lastDay = DateTime(selectedDate.year, selectedDate.month + 1, 0);
 
       Map<String, String> monthMoods = {};
+      Map<int, double> usageData = {};
 
       for (int day = 1; day <= lastDay.day; day++) {
         final date = DateTime(selectedDate.year, selectedDate.month, day);
+        
+        // Load mood
         final moodImage = await _moodService.getMoodImage(date);
-
         if (moodImage != null) {
           monthMoods[_formatDateKey(date)] = moodImage;
+        }
+        
+        // Load actual usage time from stored data
+        final mood = await _moodService.getDailyMood(date);
+        if (mood != null && mood.totalUsageMinutes != null) {
+          // Convert minutes to hours
+          final usageHours = mood.totalUsageMinutes! / 60.0;
+          usageData[day] = usageHours;
         }
       }
 
       if (mounted) {
         setState(() {
           dailyMoods = monthMoods;
+          weeklyUsageHours = usageData;
         });
       }
     } catch (e) {
@@ -310,20 +334,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  String _formatDuration(double score) {
-
-    if (score == 0) return '0m';
-
-    final hours = ((100 - score) / 10).floor();
-    final minutes = (((100 - score) / 10) % 1 * 60).round();
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else {
-      return '${minutes}m';
-    }
-  }
-
   String _getMonthYear(DateTime date) {
     const months = [
       'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -333,7 +343,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 }
 
-// Separate widget for calendar day cell - optimize rebuilds
 class _CalendarDayCell extends StatelessWidget {
   final int dayNumber;
   final DateTime selectedDate;
