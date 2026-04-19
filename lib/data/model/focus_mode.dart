@@ -15,7 +15,7 @@ class FocusMode {
   final String description;
   final FocusModeType type;
   final Color color;
-  final IconData icon;
+  final String iconName; // ✅ đổi từ IconData -> String
   final List<String> allowedPackages;
   final List<String> blockedPackages;
   final bool isActive;
@@ -33,7 +33,7 @@ class FocusMode {
     required this.description,
     required this.type,
     required this.color,
-    required this.icon,
+    required this.iconName,
     this.allowedPackages = const [],
     this.blockedPackages = const [],
     this.isActive = false,
@@ -46,6 +46,24 @@ class FocusMode {
     this.customMessage,
   });
 
+  // ✅ Map iconName -> IconData (const)
+  IconData get iconData {
+    switch (iconName) {
+      case 'work':
+        return Icons.work;
+      case 'school':
+        return Icons.school;
+      case 'bedtime':
+        return Icons.bedtime;
+      case 'family':
+        return Icons.family_restroom;
+      case 'fitness_center':
+        return Icons.fitness_center;
+      default:
+        return Icons.help;
+    }
+  }
+
   // Predefined focus modes
   static const List<FocusMode> predefinedModes = [
     FocusMode(
@@ -54,7 +72,7 @@ class FocusMode {
       description: 'Block distracting apps during work hours',
       type: FocusModeType.work,
       color: Colors.blue,
-      icon: Icons.work,
+      iconName: 'work',
       blockedPackages: [
         'com.instagram.android',
         'com.facebook.katana',
@@ -69,7 +87,7 @@ class FocusMode {
       description: 'Focus on learning without distractions',
       type: FocusModeType.study,
       color: Colors.green,
-      icon: Icons.school,
+      iconName: 'school',
       allowedPackages: [
         'com.google.android.apps.docs.editors.docs',
         'com.microsoft.office.word',
@@ -82,7 +100,7 @@ class FocusMode {
       description: 'Wind down for better sleep',
       type: FocusModeType.sleep,
       color: Colors.indigo,
-      icon: Icons.bedtime,
+      iconName: 'bedtime',
       allowedPackages: [
         'com.android.phone',
         'com.android.contacts',
@@ -95,7 +113,7 @@ class FocusMode {
       description: 'Spend quality time with family',
       type: FocusModeType.family,
       color: Colors.pink,
-      icon: Icons.family_restroom,
+      iconName: 'family',
       allowedPackages: [
         'com.android.camera2',
         'com.google.android.apps.photos',
@@ -107,7 +125,7 @@ class FocusMode {
       description: 'Stay focused during exercise',
       type: FocusModeType.exercise,
       color: Colors.orange,
-      icon: Icons.fitness_center,
+      iconName: 'fitness_center',
       allowedPackages: [
         'com.spotify.music',
         'com.google.android.music',
@@ -117,14 +135,14 @@ class FocusMode {
     ),
   ];
 
-  // Copy with method
+  // Copy with
   FocusMode copyWith({
     String? id,
     String? name,
     String? description,
     FocusModeType? type,
     Color? color,
-    IconData? icon,
+    String? iconName,
     List<String>? allowedPackages,
     List<String>? blockedPackages,
     bool? isActive,
@@ -142,7 +160,7 @@ class FocusMode {
       description: description ?? this.description,
       type: type ?? this.type,
       color: color ?? this.color,
-      icon: icon ?? this.icon,
+      iconName: iconName ?? this.iconName,
       allowedPackages: allowedPackages ?? this.allowedPackages,
       blockedPackages: blockedPackages ?? this.blockedPackages,
       isActive: isActive ?? this.isActive,
@@ -156,16 +174,14 @@ class FocusMode {
     );
   }
 
-  // Helper methods
+  // Logic
   bool shouldBlockPackage(String packageName) {
     if (!isActive) return false;
-    
-    // If there are allowed packages, only allow those
+
     if (allowedPackages.isNotEmpty) {
       return !allowedPackages.contains(packageName);
     }
-    
-    // Otherwise, block packages in the blocked list
+
     return blockedPackages.contains(packageName);
   }
 
@@ -179,10 +195,10 @@ class FocusMode {
   String get formattedRemainingTime {
     final remaining = remainingTime;
     if (remaining == null) return 'No time limit';
-    
+
     final hours = remaining.inHours;
     final minutes = remaining.inMinutes % 60;
-    
+
     if (hours > 0) {
       return '${hours}h ${minutes}m remaining';
     }
@@ -195,7 +211,7 @@ class FocusMode {
     return formattedRemainingTime;
   }
 
-  // JSON serialization
+  // JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -203,7 +219,7 @@ class FocusMode {
       'description': description,
       'type': type.name,
       'color': color.value,
-      'icon': icon.codePoint,
+      'icon': iconName, // ✅ lưu string
       'allowedPackages': allowedPackages,
       'blockedPackages': blockedPackages,
       'isActive': isActive,
@@ -224,7 +240,7 @@ class FocusMode {
       description: json['description'],
       type: FocusModeType.values.firstWhere((e) => e.name == json['type']),
       color: Color(json['color']),
-      icon: IconData(json['icon'], fontFamily: 'MaterialIcons'),
+      iconName: json['icon'], // ✅ đọc string
       allowedPackages: List<String>.from(json['allowedPackages'] ?? []),
       blockedPackages: List<String>.from(json['blockedPackages'] ?? []),
       isActive: json['isActive'] ?? false,
@@ -238,4 +254,3 @@ class FocusMode {
     );
   }
 }
-

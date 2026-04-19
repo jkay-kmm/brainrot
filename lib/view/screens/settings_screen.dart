@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:brainrot/generated/l10n.dart';
+import 'package:flutter/material.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -115,21 +115,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
-
   void _showComingSoon(BuildContext context, String feature) {
     showDialog(
       context: context,
