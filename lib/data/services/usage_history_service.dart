@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../model/daily_usage_history.dart';
 import '../model/weekly_summary.dart';
-import '../model/app_block_info.dart';
 import 'app_blocking_service.dart';
 
 class UsageHistoryService {
@@ -17,17 +15,13 @@ class UsageHistoryService {
   Box<DailyUsageHistory>? _dailyHistoryBox;
   Box<WeeklySummary>? _weeklySummaryBox;
   
-  // Stream controllers for real-time updates
   final StreamController<List<DailyUsageHistory>> _historyController = 
       StreamController.broadcast();
   final StreamController<WeeklySummary?> _weeklyController = 
       StreamController.broadcast();
-
-  // Getters for streams
   Stream<List<DailyUsageHistory>> get historyStream => _historyController.stream;
   Stream<WeeklySummary?> get weeklyStream => _weeklyController.stream;
 
-  /// Initialize Hive and open boxes
   Future<void> initialize() async {
     try {
       if (!Hive.isAdapterRegistered(0)) {
@@ -47,17 +41,13 @@ class UsageHistoryService {
     }
   }
 
-  /// Save today's usage data
   Future<void> saveTodayUsage() async {
     try {
       final today = DateTime.now();
       final todayKey = _getDayKey(today);
 
-      // Get current app block status from blocking service
       final blockingService = AppBlockingService();
       final appBlockStatus = await blockingService.getAllAppBlockStatus();
-      
-      // Calculate usage data
       final appUsageMinutes = <String, int>{};
       final appNames = <String, String>{};
       int totalScreenTime = 0;
@@ -74,29 +64,23 @@ class UsageHistoryService {
         if (app.isBlocked) blockedCount++;
       }
 
-      // Get most used apps (top 5)
       final sortedApps = appUsageMinutes.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
       final mostUsedApps = sortedApps.take(5).map((e) => e.key).toList();
 
-      // Get active rules count
       final activeRulesCount = blockingService.rules.where((r) => r.isActive).length;
-      
-      // Get focus mode info
       final activeFocus = blockingService.activeFocusMode;
       String? focusModeName;
       int focusModeMinutes = 0;
       
       if (activeFocus != null) {
         focusModeName = activeFocus.name;
-        // Calculate focus mode duration (simplified)
         if (activeFocus.startTime != null) {
           final focusDuration = DateTime.now().difference(activeFocus.startTime!);
           focusModeMinutes = focusDuration.inMinutes.clamp(0, totalScreenTime);
         }
       }
 
-      // Create daily history record
       final dailyHistory = DailyUsageHistory(
         date: DateTime(today.year, today.month, today.day),
         appUsageMinutes: appUsageMinutes,
@@ -116,13 +100,11 @@ class UsageHistoryService {
     }
   }
 
-  /// Get daily history for specific date
   Future<DailyUsageHistory?> getDayHistory(DateTime date) async {
     final key = _getDayKey(date);
     return _dailyHistoryBox!.get(key);
   }
 
-  /// Get recent history (last N days)
   Future<List<DailyUsageHistory>> getRecentHistory(int days) async {
     final histories = <DailyUsageHistory>[];
     final today = DateTime.now();
@@ -135,12 +117,10 @@ class UsageHistoryService {
       }
     }
     
-    // Sort by date (newest first)
     histories.sort((a, b) => b.date.compareTo(a.date));
     return histories;
   }
 
-  /// Get history for specific date range
   Future<List<DailyUsageHistory>> getHistoryRange(DateTime startDate, DateTime endDate) async {
     final histories = <DailyUsageHistory>[];
     
@@ -156,14 +136,12 @@ class UsageHistoryService {
     return histories;
   }
 
-  /// Get weekly summary for specific week
   Future<WeeklySummary?> getWeeklySummary(DateTime date) async {
     final weekStart = _getWeekStart(date);
     final key = _getWeekKey(weekStart);
     return _weeklySummaryBox!.get(key);
   }
 
-  /// Get recent weekly summaries
   Future<List<WeeklySummary>> getRecentWeeklySummaries(int weeks) async {
     final summaries = <WeeklySummary>[];
     final today = DateTime.now();
@@ -176,12 +154,10 @@ class UsageHistoryService {
       }
     }
     
-    // Sort by date (newest first)
     summaries.sort((a, b) => b.weekStartDate.compareTo(a.weekStartDate));
     return summaries;
   }
 
-  /// Get total usage statistics
   Future<Map<String, dynamic>> getTotalStats() async {
     final allHistories = _dailyHistoryBox!.values.toList();
     
@@ -206,13 +182,11 @@ class UsageHistoryService {
       totalAppsBlocked += history.appsBlockedCount;
       if (history.isProductiveDay) productiveDays++;
 
-      // Aggregate app usage
       history.appUsageMinutes.forEach((app, minutes) {
         appTotals[app] = (appTotals[app] ?? 0) + minutes;
       });
     }
 
-    // Find most used app
     String mostUsedApp = 'None';
     if (appTotals.isNotEmpty) {
       final topApp = appTotals.entries.reduce((a, b) => a.value > b.value ? a : b);
@@ -229,13 +203,11 @@ class UsageHistoryService {
     };
   }
 
-  /// Update weekly summary
   Future<void> _updateWeeklySummary(DateTime date) async {
     try {
       final weekStart = _getWeekStart(date);
       final weekEnd = weekStart.add(const Duration(days: 6));
       
-      // Get all daily histories for this week
       final weekHistories = await getHistoryRange(weekStart, weekEnd);
       
       if (weekHistories.isNotEmpty) {
@@ -244,7 +216,6 @@ class UsageHistoryService {
         
         await _weeklySummaryBox!.put(key, weeklySummary);
         
-        // Notify listeners
         _weeklyController.add(weeklySummary);
       }
     } catch (e) {
@@ -266,7 +237,7 @@ class UsageHistoryService {
         await _dailyHistoryBox!.deleteAll(keysToDelete);
       }
 
-      final weekCutoff = DateTime.now().subtract(const Duration(days: 84)); // 12 weeks
+      final weekCutoff = DateTime.now().subtract(const Duration(days: 84));
       final weekKeysToDelete = <String>[];
       
       for (final key in _weeklySummaryBox!.keys) {
@@ -297,13 +268,11 @@ class UsageHistoryService {
     return DateTime(date.year, date.month, date.day - (weekday - 1));
   }
 
-  /// Dispose resources
   void dispose() {
     _historyController.close();
     _weeklyController.close();
   }
 
-  /// Export data as JSON (for backup/sharing)
   Future<Map<String, dynamic>> exportData() async {
     final dailyData = _dailyHistoryBox!.values.map((h) => {
       'date': h.date.toIso8601String(),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../data/services/daily_mood_service.dart';
-import '../../data/services/real_app_usage_service.dart';
-import '../../generated/l10n.dart';
+import '../../../data/services/daily_mood_service.dart';
+import '../../../l10n/l10n.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -103,7 +102,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Day headers
                     Row(
                       children: [
                         "Sun",
@@ -132,13 +130,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Calendar days
                     Expanded(child: _buildCalendarGrid()),
                   ],
                 ),
               ),
 
-              // Weekly Usage Chart
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -172,7 +168,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildWeeklyChart() {
-    // Lấy 7 ngày gần nhất
     final now = DateTime.now();
     final weekData = <Map<String, dynamic>>[];
     
@@ -188,7 +183,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       });
     }
     
-    // Tìm giá trị max để scale
     final maxHours = weekData.map((d) => d['hours'] as double).reduce((a, b) => a > b ? a : b);
     final chartHeight = 150.0;
     
@@ -208,7 +202,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Giá trị giờ
                   if (hours > 0)
                     Text(
                       hours.toStringAsFixed(1),
@@ -218,17 +211,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                   const SizedBox(height: 4),
-                  // Cột
                   Container(
                     width: double.infinity,
                     height: barHeight.clamp(4.0, chartHeight),
                     decoration: BoxDecoration(
-                      color: isToday ? Colors.orange : Colors.blue.withOpacity(0.7),
+                      color: isToday ? Colors.orange : Colors.blue.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Tên ngày
                   Text(
                     data['day'] as String,
                     style: TextStyle(
@@ -275,7 +266,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final dayNumber = index - firstWeekday + 1;
 
         if (dayNumber < 1 || dayNumber > daysInMonth) {
-          return const SizedBox.shrink(); // Empty cell - use const
+          return const SizedBox.shrink();
         }
 
         return RepaintBoundary(
@@ -295,7 +286,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         selectedDate.month,
       );
 
-      // Load daily moods for the month
       final lastDay = DateTime(selectedDate.year, selectedDate.month + 1, 0);
 
       Map<String, String> monthMoods = {};
@@ -304,16 +294,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       for (int day = 1; day <= lastDay.day; day++) {
         final date = DateTime(selectedDate.year, selectedDate.month, day);
         
-        // Load mood
         final moodImage = await _moodService.getMoodImage(date);
         if (moodImage != null) {
           monthMoods[_formatDateKey(date)] = moodImage;
         }
         
-        // Load actual usage time from stored data
         final mood = await _moodService.getDailyMood(date);
         if (mood != null && mood.totalUsageMinutes != null) {
-          // Convert minutes to hours
           final usageHours = mood.totalUsageMinutes! / 60.0;
           usageData[day] = usageHours;
         }
@@ -371,7 +358,7 @@ class _CalendarDayCell extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(10),
         border: isToday ? Border.all(color: Colors.orange, width: 2) : null,
       ),
@@ -379,7 +366,6 @@ class _CalendarDayCell extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Day number
           Text(
             dayNumber.toString(),
             style: TextStyle(
@@ -388,7 +374,6 @@ class _CalendarDayCell extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-          // Mood icon
           if (hasActivity) ...[
             const SizedBox(height: 2),
             Expanded(
@@ -397,7 +382,7 @@ class _CalendarDayCell extends StatelessWidget {
                 child: Image.asset(
                   moodImage,
                   fit: BoxFit.cover,
-                  cacheWidth: 60, // Cache smaller size for performance
+                  cacheWidth: 60,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(
                       Icons.sentiment_neutral,

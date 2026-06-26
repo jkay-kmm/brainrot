@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 enum AppBlockStatus {
-  allowed,      // Được phép sử dụng
-  blocked,      // Bị chặn hoàn toàn
-  limited,      // Bị giới hạn thời gian
-  warning,      // Đang trong trạng thái cảnh báo
+  allowed,
+  blocked,
+  limited,
+  warning,
 }
 
 class AppBlockInfo {
@@ -36,7 +36,6 @@ class AppBlockInfo {
     this.canBypass = false,
   });
 
-  // Copy with method
   AppBlockInfo copyWith({
     String? packageName,
     String? appName,
@@ -67,7 +66,6 @@ class AppBlockInfo {
     );
   }
 
-  // Helper methods
   bool get isBlocked => status == AppBlockStatus.blocked;
   bool get isLimited => status == AppBlockStatus.limited;
   bool get isWarning => status == AppBlockStatus.warning;
@@ -167,7 +165,6 @@ class AppBlockInfo {
     return '${minutes}m left';
   }
 
-  // JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'packageName': packageName,

@@ -8,7 +8,7 @@ class DailyUsageHistory extends HiveObject {
   DateTime date;
 
   @HiveField(1)
-  Map<String, int> appUsageMinutes; // packageName -> minutes used
+  Map<String, int> appUsageMinutes;
 
   @HiveField(2)
   int totalScreenTimeMinutes;
@@ -20,16 +20,16 @@ class DailyUsageHistory extends HiveObject {
   int rulesActiveCount;
 
   @HiveField(5)
-  List<String> mostUsedApps; // Top 5 most used apps
+  List<String> mostUsedApps;
 
   @HiveField(6)
-  Map<String, String> appNames; // packageName -> app display name
+  Map<String, String> appNames;
 
   @HiveField(7)
-  String? activeFocusMode; // Focus mode used that day
+  String? activeFocusMode;
 
   @HiveField(8)
-  int focusModeMinutes; // Minutes spent in focus mode
+  int focusModeMinutes;
 
   DailyUsageHistory({
     required this.date,
@@ -43,7 +43,6 @@ class DailyUsageHistory extends HiveObject {
     this.focusModeMinutes = 0,
   });
 
-  /// Get formatted total screen time
   String get formattedTotalScreenTime {
     final hours = totalScreenTimeMinutes ~/ 60;
     final minutes = totalScreenTimeMinutes % 60;
@@ -55,7 +54,6 @@ class DailyUsageHistory extends HiveObject {
     }
   }
 
-  /// Get top app usage for the day
   String get topAppUsage {
     if (mostUsedApps.isEmpty) return 'No usage';
     
@@ -70,26 +68,21 @@ class DailyUsageHistory extends HiveObject {
     return '$appName ($timeStr)';
   }
 
-  /// Get productivity score (0-100)
   int get productivityScore {
     if (totalScreenTimeMinutes == 0) return 100;
     
-    // Calculate based on blocked apps vs total usage
     final blockedRatio = appsBlockedCount / (appsBlockedCount + mostUsedApps.length).clamp(1, double.infinity);
     final focusRatio = focusModeMinutes / totalScreenTimeMinutes.clamp(1, double.infinity);
     
     return ((blockedRatio * 50) + (focusRatio * 50)).round().clamp(0, 100);
   }
 
-  /// Check if this is a productive day (score >= 70)
   bool get isProductiveDay => productivityScore >= 70;
 
-  /// Get usage for specific app
   int getAppUsage(String packageName) {
     return appUsageMinutes[packageName] ?? 0;
   }
 
-  /// Get formatted usage for specific app
   String getFormattedAppUsage(String packageName) {
     final minutes = getAppUsage(packageName);
     final hours = minutes ~/ 60;

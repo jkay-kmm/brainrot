@@ -1,10 +1,5 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'weekly_summary.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class WeeklySummaryAdapter extends TypeAdapter<WeeklySummary> {
   @override

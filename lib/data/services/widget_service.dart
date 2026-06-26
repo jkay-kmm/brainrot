@@ -5,7 +5,6 @@ class WidgetService {
   static final WidgetService _instance = WidgetService._internal();
   factory WidgetService() => _instance;
   WidgetService._internal();
-  // update data
   Future<void> updateWidget({
     required Duration todayUsage,
     required Duration goal,
@@ -42,12 +41,10 @@ class WidgetService {
         qualifiedAndroidName: 'com.example.brainrot.UsageWidgetProvider',
       );
 
-
     } catch (e) {
       debugPrint('Error');
     }
   }
-  // cac icon trang thai
   String _getMoodImage(double score) {
     if (score >= 80) return 'vui';
     if (score >= 60) return 'suynghi';
@@ -66,7 +63,6 @@ class WidgetService {
     }
   }
 
-
   Future<void> registerBackgroundCallback() async {
     try {
       await HomeWidget.setAppGroupId('com.example.brainrot.widget');
@@ -75,8 +71,6 @@ class WidgetService {
       debugPrint(' Error: $e');
     }
   }
-
-  // Check if widget
   Future<bool> isWidgetAvailable() async {
     try {
       return true;

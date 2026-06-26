@@ -23,7 +23,6 @@ class TodayCalendarDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -42,13 +41,12 @@ class TodayCalendarDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Calendar
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE4B5).withOpacity(0.3),
+                color: const Color(0xFFFFE4B5).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.orange.withOpacity(0.3),
+                  color: Colors.orange.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -62,13 +60,12 @@ class TodayCalendarDialog extends StatelessWidget {
                     onDateSelected!(date);
                   }
                 },
-                currentDate: DateTime.now(), // This highlights today
+                currentDate: DateTime.now(),
               ),
             ),
             
             const SizedBox(height: 16),
             
-            // Today info
             _buildTodayInfo(context),
           ],
         ),
@@ -81,10 +78,10 @@ class TodayCalendarDialog extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.3),
+          color: Colors.orange.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -158,7 +155,6 @@ class TodayCalendarDialog extends StatelessWidget {
     return '$dayName, $monthName ${date.day}, ${date.year}';
   }
 
-  // Static method để show dialog dễ dàng
   static Future<void> show(
     BuildContext context, {
     Function(DateTime)? onDateSelected,

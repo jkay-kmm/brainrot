@@ -15,7 +15,7 @@ class FocusMode {
   final String description;
   final FocusModeType type;
   final Color color;
-  final String iconName; // ✅ đổi từ IconData -> String
+  final String iconName;
   final List<String> allowedPackages;
   final List<String> blockedPackages;
   final bool isActive;
@@ -46,7 +46,6 @@ class FocusMode {
     this.customMessage,
   });
 
-  // ✅ Map iconName -> IconData (const)
   IconData get iconData {
     switch (iconName) {
       case 'work':
@@ -64,7 +63,6 @@ class FocusMode {
     }
   }
 
-  // Predefined focus modes
   static const List<FocusMode> predefinedModes = [
     FocusMode(
       id: 'work',
@@ -135,7 +133,6 @@ class FocusMode {
     ),
   ];
 
-  // Copy with
   FocusMode copyWith({
     String? id,
     String? name,
@@ -174,7 +171,6 @@ class FocusMode {
     );
   }
 
-  // Logic
   bool shouldBlockPackage(String packageName) {
     if (!isActive) return false;
 
@@ -211,7 +207,6 @@ class FocusMode {
     return formattedRemainingTime;
   }
 
-  // JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -219,7 +214,7 @@ class FocusMode {
       'description': description,
       'type': type.name,
       'color': color.value,
-      'icon': iconName, // ✅ lưu string
+      'icon': iconName,
       'allowedPackages': allowedPackages,
       'blockedPackages': blockedPackages,
       'isActive': isActive,
@@ -240,7 +235,7 @@ class FocusMode {
       description: json['description'],
       type: FocusModeType.values.firstWhere((e) => e.name == json['type']),
       color: Color(json['color']),
-      iconName: json['icon'], // ✅ đọc string
+      iconName: json['icon'],
       allowedPackages: List<String>.from(json['allowedPackages'] ?? []),
       blockedPackages: List<String>.from(json['blockedPackages'] ?? []),
       isActive: json['isActive'] ?? false,

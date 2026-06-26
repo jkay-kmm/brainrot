@@ -1,4 +1,4 @@
-import 'package:brainrot/generated/l10n.dart';
+import 'package:brainrot/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 
@@ -62,13 +62,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.privacy_tip_outlined,
             ),
             const SizedBox(height: 30),
-
-            // Center(
-            //   child: Text(
-            //     t.appVersion,
-            //     style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -81,11 +74,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),

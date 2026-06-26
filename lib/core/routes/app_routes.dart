@@ -23,7 +23,6 @@ class AppRoutes {
         name: 'home',
         builder: (context, state) => const MainScreen(),
       ),
-      // Add more routes here as needed
     ],
     errorBuilder:
         (context, state) => Scaffold(

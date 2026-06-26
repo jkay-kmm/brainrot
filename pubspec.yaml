@@ -31,8 +31,7 @@ dependencies:
   # Navigation
   go_router: ^13.2.0
 
-  # JSON Serialization
-  json_annotation: ^4.8.1
+
 
   # Utilities
   equatable: ^2.0.5

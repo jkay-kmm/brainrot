@@ -1,11 +1,11 @@
 import 'package:brainrot/widgets/calendar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../view_model/home_view_model.dart';
-import '../../data/model/app_usage_info.dart';
+import '../../../view_model/home_view_model.dart';
+import '../../../data/model/app_usage_info.dart';
 
-import '../../widgets/loading_page.dart';
-import '../../generated/l10n.dart';
+import '../../../widgets/loading_page.dart';
+import '../../../l10n/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +20,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Load data only on first time, not every time screen appears
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeViewModel = context.read<HomeViewModel>();
-      // Only load if data is empty
       if (homeViewModel.appUsageList.isEmpty) {
         homeViewModel.loadTodayUsage();
       }
@@ -40,7 +38,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // Refresh data silently when app comes back to foreground
     if (state == AppLifecycleState.resumed) {
       final homeViewModel = context.read<HomeViewModel>();
       homeViewModel.silentRefresh();
@@ -54,44 +51,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Consumer<HomeViewModel>(
       builder: (context, homeViewModel, _) {
         return Scaffold(
-          backgroundColor: Color(0xFFFFE4B5),
-          appBar: AppBar(
-            toolbarHeight: 0,
-            title: const Text(
-              'brainrot',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            actions: [
-              // Today Calendar Button
-              TextButton.icon(
-                onPressed: () => _showTodayCalendar(context),
-                icon: const Icon(
-                  Icons.calendar_today,
-                  color: Colors.black,
-                  size: 20,
-                ),
-                label: Text(
-                  "hihi",
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  backgroundColor: Colors.white.withOpacity(0.8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
+          backgroundColor: Color(0xFFFDF5E6),
+
           body: _HomeBody(homeViewModel: homeViewModel),
         );
       },
@@ -121,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 }
 
-// Separate widget for body to optimize rebuilds
 class _HomeBody extends StatelessWidget {
   final HomeViewModel homeViewModel;
 
@@ -131,7 +91,6 @@ class _HomeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<HomeViewModel>(
       builder: (context, vm, child) {
-        // Only rebuild when loading/error state changes
         if (vm.isLoading) {
           return const Center(
             child: Column(
@@ -175,7 +134,7 @@ class _HomeBody extends StatelessWidget {
       child: RefreshIndicator(
         onRefresh: () => homeViewModel.refresh(),
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          // physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,42 +183,45 @@ Widget _buildBrainHealthCalculation(
 
   return Column(
     children: [
-      SizedBox(
-        width: 100,
-        height: 100,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(60),
-          child: Image.asset(
-            _getMoodImage(finalScore),
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(60),
-                child: Image.asset(
-                  'assets/images/vui.png',
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error2, stackTrace2) {
-                    return Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.orange[200],
-                        borderRadius: BorderRadius.circular(60),
-                      ),
-                      child: const Icon(
-                        Icons.psychology,
-                        size: 60,
-                        color: Colors.brown,
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
+      Padding(
+        padding: const EdgeInsets.only(top: 23),
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: Image.asset(
+              _getMoodImage(finalScore),
+              width: 120,
+              height: 120,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(60),
+                  child: Image.asset(
+                    'assets/images/vui.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error2, stackTrace2) {
+                      return Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.orange[200],
+                          borderRadius: BorderRadius.circular(60),
+                        ),
+                        child: const Icon(
+                          Icons.psychology,
+                          size: 60,
+                          color: Colors.brown,
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -317,7 +279,7 @@ Widget _buildBrainHealthCalculation(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Your score will reset to 100 at midnight.',
+            'Một ngày tuyệt vời với 100 điểm năng lượng.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
@@ -401,7 +363,7 @@ void _showHealthCalculationDetails(
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: _getScoreColor(finalScore).withOpacity(0.3),
+                          color: _getScoreColor(finalScore).withValues(alpha: 0.3),
                           blurRadius: 10,
                         ),
                       ],
@@ -476,7 +438,7 @@ void _showHealthCalculationDetails(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: _getScoreColor(finalScore).withOpacity(0.1),
+                          color: _getScoreColor(finalScore).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _getScoreColor(finalScore),
@@ -551,7 +513,7 @@ void _showHealthCalculationDetails(
                       const SizedBox(height: 24),
                       _buildCalculationRow(
                         'estimated usage time',
-                        '${totalMinutes} minutes (${(totalMinutes / 60).toStringAsFixed(1)} giờ)',
+                        '$totalMinutes minutes (${(totalMinutes / 60).toStringAsFixed(1)} giờ)',
                       ),
                       _buildCalculationRow(
                         'daily goal',
@@ -761,7 +723,7 @@ Widget _buildAppUsageTile(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: _buildAppIcon(app, color),

@@ -6,21 +6,14 @@ class AppUsageService {
   factory AppUsageService() => _instance;
   AppUsageService._internal();
 
-  /// Check if usage access permission is granted
   Future<bool> hasUsagePermission() async {
-    // For development, always return true
-    // In production, you would implement actual permission checking
     return true;
   }
 
-  /// Request usage access permission
   Future<bool> requestUsagePermission() async {
-    // For development, always return true
-    // In production, you would implement actual permission request
     return true;
   }
 
-  /// Get app usage data for today
   Future<List<AppUsageInfo>> getTodayUsage() async {
     try {
       await Future.delayed(const Duration(seconds: 1));
@@ -32,13 +25,9 @@ class AppUsageService {
     }
   }
 
-  /// Get app usage data for a specific date range
   Future<List<AppUsageInfo>> getUsageInRange(DateTime startTime, DateTime endTime) async {
     try {
-      // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
-      
-      // Generate realistic mock data
       return _generateRealisticMockData();
     } catch (e) {
       print('Error getting usage in range: $e');
@@ -46,7 +35,6 @@ class AppUsageService {
     }
   }
 
-  /// Generate realistic mock data with random variations
   List<AppUsageInfo> _generateRealisticMockData() {
     final random = Random();
     final now = DateTime.now();
@@ -69,12 +57,9 @@ class AppUsageService {
     List<AppUsageInfo> usageList = [];
     
     for (var app in apps) {
-      // Add random variation (-50% to +100%)
       final baseMinutes = app['baseMinutes'] as int;
-      final variation = random.nextDouble() * 1.5 + 0.5; // 0.5 to 2.0
+      final variation = random.nextDouble() * 1.5 + 0.5;
       final actualMinutes = (baseMinutes * variation).round();
-      
-      // Skip apps with very low usage sometimes
       if (actualMinutes < 5 && random.nextBool()) continue;
       
       final startTime = now.subtract(Duration(hours: random.nextInt(12) + 1));
@@ -88,13 +73,11 @@ class AppUsageService {
       ));
     }
 
-    // Sort by usage duration (highest first)
     usageList.sort((a, b) => b.usage.compareTo(a.usage));
     
     return usageList;
   }
 
-  /// Get total usage time for all apps
   Duration getTotalUsage(List<AppUsageInfo> usageList) {
     return usageList.fold(
       Duration.zero,
@@ -102,14 +85,12 @@ class AppUsageService {
     );
   }
 
-  /// Get top N most used apps
   List<AppUsageInfo> getTopUsedApps(List<AppUsageInfo> usageList, {int limit = 10}) {
     final sorted = List<AppUsageInfo>.from(usageList);
     sorted.sort((a, b) => b.usage.compareTo(a.usage));
     return sorted.take(limit).toList();
   }
 
-  /// Get usage statistics
   Map<String, dynamic> getUsageStats(List<AppUsageInfo> usageList) {
     if (usageList.isEmpty) {
       return {
@@ -131,13 +112,11 @@ class AppUsageService {
     };
   }
 
-  /// Simulate refreshing data with new variations
   Future<List<AppUsageInfo>> refreshUsageData() async {
     await Future.delayed(const Duration(milliseconds: 800));
     return _generateRealisticMockData();
   }
 
-  /// Get usage trend (mock data)
   Map<String, int> getUsageTrend() {
     final random = Random();
     return {

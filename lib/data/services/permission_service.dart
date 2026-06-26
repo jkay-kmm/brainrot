@@ -9,7 +9,6 @@ class PermissionService {
   factory PermissionService() => _instance;
   PermissionService._internal();
 
-  /// Check if overlay permission is granted
   Future<bool> hasOverlayPermission() async {
     try {
       final bool? hasPermission = await _channel.invokeMethod(
@@ -22,7 +21,6 @@ class PermissionService {
     }
   }
 
-  /// Request overlay permission
   Future<void> requestOverlayPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
@@ -31,7 +29,6 @@ class PermissionService {
     }
   }
 
-  /// Check if accessibility permission is granted
   Future<bool> hasAccessibilityPermission() async {
     try {
       final bool? hasPermission = await _channel.invokeMethod(
@@ -44,7 +41,6 @@ class PermissionService {
     }
   }
 
-  /// Request accessibility permission
   Future<void> requestAccessibilityPermission() async {
     try {
       await _channel.invokeMethod('requestAccessibilityPermission');
@@ -55,7 +51,6 @@ class PermissionService {
     }
   }
 
-  /// Start the blocking service
   Future<bool> startBlockingService() async {
     try {
       final bool? success = await _channel.invokeMethod('startBlockingService');
@@ -68,7 +63,6 @@ class PermissionService {
     }
   }
 
-  /// Stop the blocking service
   Future<bool> stopBlockingService() async {
     try {
       final bool? success = await _channel.invokeMethod('stopBlockingService');
@@ -81,7 +75,6 @@ class PermissionService {
     }
   }
 
-  /// Check all required permissions for app blocking
   Future<PermissionStatus> checkAllPermissions() async {
     final hasOverlay = await hasOverlayPermission();
     final hasAccessibility = await hasAccessibilityPermission();
@@ -92,17 +85,14 @@ class PermissionService {
     );
   }
 
-  /// Request all required permissions
   Future<void> requestAllPermissions() async {
     if (!await hasOverlayPermission()) {
       await requestOverlayPermission();
     }
 
-    // Request accessibility permission
     await requestAccessibilityPermission();
   }
 
-  /// Show permission setup guide
   String getPermissionSetupGuide() {
     return '''
 To enable app blocking, you need to grant these permissions:

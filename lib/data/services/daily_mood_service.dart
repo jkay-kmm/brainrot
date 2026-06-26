@@ -31,7 +31,6 @@ class DailyMoodService {
         notes: notes,
       );
       
-      // Add usage time if provided
       if (totalUsageMinutes != null) {
         mood.totalUsageMinutes = totalUsageMinutes;
       }
@@ -50,7 +49,6 @@ class DailyMoodService {
     }
   }
 
-  /// Get all mood data
   Future<List<DailyMood>> getAllMoodData() async {
     try {
       return _moodBox!.values.toList();
@@ -60,25 +58,21 @@ class DailyMoodService {
     }
   }
 
-  /// Check if a date has mood data
   Future<bool> hasMoodData(DateTime date) async {
     final mood = await getDailyMood(date);
     return mood != null;
   }
 
-  /// Get mood image for a specific date
   Future<String?> getMoodImage(DateTime date) async {
     final mood = await getDailyMood(date);
     return mood?.moodImage;
   }
 
-  /// Get mood score for a specific date
   Future<double?> getMoodScore(DateTime date) async {
     final mood = await getDailyMood(date);
     return mood?.score;
   }
 
-  /// Get moods for a specific date range
   Future<List<DailyMood>> getMoodsInRange(DateTime startDate, DateTime endDate) async {
     try {
       final allMoods = await getAllMoodData();
@@ -94,7 +88,6 @@ class DailyMoodService {
     }
   }
 
-  /// Get monthly statistics
   Future<Map<String, dynamic>> getMonthlyStats(int year, int month) async {
     try {
       final startDate = DateTime(year, month, 1);
@@ -158,7 +151,6 @@ class DailyMoodService {
     }
   }
 
-  /// Get yearly statistics
   Future<Map<String, dynamic>> getYearlyStats(int year) async {
     try {
       final startDate = DateTime(year, 1, 1);
@@ -177,7 +169,6 @@ class DailyMoodService {
         };
       }
 
-      // Calculate monthly averages
       Map<int, List<double>> monthlyScores = {};
       int totalProductiveDays = 0;
 
@@ -235,7 +226,6 @@ class DailyMoodService {
     }
   }
 
-  /// Get recent moods (last N days)
   Future<List<DailyMood>> getRecentMoods(int days) async {
     try {
       final endDate = DateTime.now();
@@ -248,7 +238,6 @@ class DailyMoodService {
     }
   }
 
-  /// Update existing mood
   Future<void> updateDailyMood(DateTime date, double newScore, {String? notes}) async {
     try {
       final dateKey = _formatDateKey(date);
@@ -276,7 +265,6 @@ class DailyMoodService {
     }
   }
 
-  /// Clear all mood data (for testing purposes)
   Future<void> clearAllData() async {
     try {
       await _moodBox!.clear();
@@ -285,7 +273,6 @@ class DailyMoodService {
     }
   }
 
-  /// Clean up old data (keep last 365 days)
   Future<void> _cleanupOldData() async {
     try {
       final cutoffDate = DateTime.now().subtract(const Duration(days: 365));
@@ -305,7 +292,6 @@ class DailyMoodService {
     }
   }
 
-  /// Export mood data as JSON
   Future<Map<String, dynamic>> exportData() async {
     try {
       final allMoods = await getAllMoodData();

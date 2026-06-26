@@ -74,25 +74,20 @@ class AppIconCache {
     }
   }
 
-  /// Remove icon from disk
   Future<void> _removeFromDisk(String packageName) async {
     final cacheKey = _cacheKeyPrefix + packageName;
     await _prefs!.remove(cacheKey);
     await _removeCacheInfo(packageName);
   }
 
-  /// Clean cache if it exceeds maximum size
   Future<void> _cleanCache() async {
     final cacheInfo = await _getCacheInfo();
 
     if (cacheInfo.length > _maxCacheSize) {
-      // Sort by timestamp (oldest first)
       final sortedEntries =
           cacheInfo.entries.toList()..sort(
             (a, b) => a.value['timestamp'].compareTo(b.value['timestamp']),
           );
-
-      // Remove oldest entries
       final toRemove = sortedEntries.take(cacheInfo.length - _maxCacheSize);
       for (var entry in toRemove) {
         await _removeFromDisk(entry.key);
@@ -101,7 +96,6 @@ class AppIconCache {
     }
   }
 
-  /// Clean expired cache entries
   Future<void> _cleanExpiredCache() async {
     final cacheInfo = await _getCacheInfo();
     final now = DateTime.now();
@@ -116,11 +110,9 @@ class AppIconCache {
     }
   }
 
-  /// Load cache info from SharedPreferences
   Future<void> _loadCacheInfo() async {
   }
 
-  /// Get cache info
   Future<Map<String, Map<String, dynamic>>> _getCacheInfo() async {
     final infoString = _prefs!.getString(_cacheInfoKey);
     if (infoString != null) {
@@ -137,7 +129,6 @@ class AppIconCache {
     return {};
   }
 
-  /// Update cache info
   Future<void> _updateCacheInfo(String packageName, int size) async {
     final cacheInfo = await _getCacheInfo();
     cacheInfo[packageName] = {
@@ -147,21 +138,16 @@ class AppIconCache {
     await _prefs!.setString(_cacheInfoKey, jsonEncode(cacheInfo));
   }
 
-  /// Remove from cache info
   Future<void> _removeCacheInfo(String packageName) async {
     final cacheInfo = await _getCacheInfo();
     cacheInfo.remove(packageName);
     await _prefs!.setString(_cacheInfoKey, jsonEncode(cacheInfo));
   }
 
-  /// Clear all cache
   Future<void> clearAll() async {
     await initialize();
 
-    // Clear memory cache
     _memoryCache.clear();
-
-    // Clear disk cache
     final cacheInfo = await _getCacheInfo();
     for (var packageName in cacheInfo.keys) {
       await _removeFromDisk(packageName);
@@ -171,7 +157,6 @@ class AppIconCache {
     debugPrint('🗑️ [CACHE] All cache cleared');
   }
 
-  /// Get cache statistics
   Future<Map<String, dynamic>> getStats() async {
     await initialize();
     final cacheInfo = await _getCacheInfo();

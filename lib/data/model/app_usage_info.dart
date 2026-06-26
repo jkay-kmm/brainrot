@@ -6,7 +6,7 @@ class AppUsageInfo {
   final Duration usage;
   final DateTime startTime;
   final DateTime endTime;
-  final Uint8List? iconBytes; // Thêm field icon
+  final Uint8List? iconBytes;
 
   AppUsageInfo({
     required this.packageName,
@@ -14,10 +14,9 @@ class AppUsageInfo {
     required this.usage,
     required this.startTime,
     required this.endTime,
-    this.iconBytes, // Optional icon bytes
+    this.iconBytes,
   });
 
-  // Format duration to readable string
   String get formattedUsage {
     final hours = usage.inHours;
     final minutes = usage.inMinutes.remainder(60);
@@ -32,7 +31,6 @@ class AppUsageInfo {
     }
   }
 
-  // Get usage percentage relative to total usage
   double getUsagePercentage(Duration totalUsage) {
     if (totalUsage.inMilliseconds == 0) return 0.0;
     return (usage.inMilliseconds / totalUsage.inMilliseconds) * 100;
@@ -57,7 +55,6 @@ class AppUsageInfo {
     return packageName.hashCode ^ appName.hashCode ^ usage.hashCode;
   }
 
-  /// Copy method để update icon hoặc other fields
   AppUsageInfo copyWith({
     String? packageName,
     String? appName,
@@ -76,6 +73,5 @@ class AppUsageInfo {
     );
   }
 
-  /// Check if app has icon
   bool get hasIcon => iconBytes != null;
 }

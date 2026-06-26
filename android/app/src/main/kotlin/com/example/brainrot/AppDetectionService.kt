@@ -41,7 +41,7 @@ class AppDetectionService : AccessibilityService() {
         
         // Skip system UI and our own app
         if (packageName == "com.android.systemui" || 
-            packageName == "com.example.brainrot" ||
+            packageName == "com.brainrot.nguyentrung" ||
             packageName == applicationContext.packageName) {
             return
         }
@@ -59,16 +59,94 @@ class AppDetectionService : AccessibilityService() {
     
     private fun checkAndBlockApp(packageName: String) {
         try {
-            // Get blocking service instance (in a real implementation, you'd use proper service binding)
-            val blockingService = AppBlockingService()
-            val blockResult = blockingService.shouldBlockApp(packageName)
+            // Use static method to check blocking without creating new instance
+            val shouldBlock = shouldBlockPackage(packageName)
             
-            if (blockResult.shouldBlock) {
-                Log.d(TAG, "Blocking app: $packageName - ${blockResult.reason}")
-                showBlockScreen(packageName, blockResult.reason, blockResult.canBypass)
+            if (shouldBlock.first) {
+                Log.d(TAG, "Blocking app: $packageName - ${shouldBlock.second}")
+                showBlockScreen(packageName, shouldBlock.second, shouldBlock.third)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking if app should be blocked", e)
+        }
+    }
+    
+    private fun shouldBlockPackage(packageName: String): Triple<Boolean, String, Boolean> {
+        try {
+            // Read blocking data from SharedPreferences directly
+            val prefs = getSharedPreferences("flutter.com.brainrot.nguyentrung", MODE_PRIVATE)
+            
+            Log.d(TAG, "Checking if package should be blocked: $packageName")
+            
+            // Check focus modes first
+            val focusModesJson = prefs.getString("flutter.focus_modes", null)
+            Log.d(TAG, "Focus modes JSON: $focusModesJson")
+            
+            if (focusModesJson != null) {
+                val focusModesArray = org.json.JSONArray(focusModesJson)
+                for (i in 0 until focusModesArray.length()) {
+                    val focusModeJson = focusModesArray.getJSONObject(i)
+                    if (focusModeJson.optBoolean("isActive", false)) {
+                        Log.d(TAG, "Found active focus mode: ${focusModeJson.getString("name")}")
+                        // Check if this focus mode blocks the package
+                        val blockedPackagesArray = focusModeJson.optJSONArray("blockedPackages")
+                        if (blockedPackagesArray != null) {
+                            for (j in 0 until blockedPackagesArray.length()) {
+                                if (blockedPackagesArray.getString(j) == packageName) {
+                                    Log.d(TAG, "Package blocked by focus mode")
+                                    return Triple(
+                                        true,
+                                        "Blocked by ${focusModeJson.getString("name")}",
+                                        focusModeJson.optBoolean("allowEmergency", true)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check blocking rules
+            val rulesJson = prefs.getString("flutter.blocking_rules", null)
+            Log.d(TAG, "Blocking rules JSON: $rulesJson")
+            
+            if (rulesJson != null) {
+                val rulesArray = org.json.JSONArray(rulesJson)
+                Log.d(TAG, "Found ${rulesArray.length()} blocking rules")
+                
+                for (i in 0 until rulesArray.length()) {
+                    val ruleJson = rulesArray.getJSONObject(i)
+                    val ruleStatus = ruleJson.getString("status")
+                    val ruleName = ruleJson.getString("name")
+                    
+                    Log.d(TAG, "Rule: $ruleName, Status: $ruleStatus")
+                    
+                    if (ruleStatus == "active") {
+                        val targetPackagesArray = ruleJson.optJSONArray("targetPackages")
+                        if (targetPackagesArray != null) {
+                            Log.d(TAG, "Rule has ${targetPackagesArray.length()} target packages")
+                            for (j in 0 until targetPackagesArray.length()) {
+                                val targetPackage = targetPackagesArray.getString(j)
+                                Log.d(TAG, "Checking target package: $targetPackage")
+                                if (targetPackage == packageName) {
+                                    Log.d(TAG, "Package blocked by rule: $ruleName")
+                                    return Triple(
+                                        true,
+                                        ruleJson.optString("customBlockMessage", "Blocked by $ruleName"),
+                                        ruleJson.optBoolean("allowEmergencyBypass", false)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Log.d(TAG, "Package not blocked: $packageName")
+            return Triple(false, "", false)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking blocking rules", e)
+            return Triple(false, "", false)
         }
     }
     

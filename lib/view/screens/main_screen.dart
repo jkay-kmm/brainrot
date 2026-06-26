@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../generated/l10n.dart';
-import 'home_screen.dart';
-import 'calendar_screen.dart';
-import 'blocking_screen.dart';
-import 'settings_screen.dart';
+import '../../l10n/l10n.dart';
+import 'home/home_screen.dart';
+import 'calendar/calendar_screen.dart';
+import 'blocking/blocking_screen.dart';
+import 'setting/settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -36,10 +36,10 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Container(
         height: 85,
         decoration: BoxDecoration(
-          color: Color(0xFFFFE4B5),
+          color: Color(0xFFFFFAF0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -49,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
           padding: const EdgeInsets.only(
             top: 8,
             bottom: 8,
-          ), // Thêm padding để cân bằng
+          ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
@@ -84,7 +84,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: "Home",
+                label: "Trang chủ",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -99,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: "Calendar",
+                label: "Lịch",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -114,7 +114,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: "Blocking",
+                label: "Chặn",
               ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
@@ -129,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
                   height: 28,
                   colorFilter: ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                 ),
-                label: "Settings",
+                label: "Cài đặt",
               ),
             ],
           ),

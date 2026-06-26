@@ -16,22 +16,18 @@ class AppBlockingService {
   factory AppBlockingService() => _instance;
   AppBlockingService._internal();
 
-  // Storage keys - must match Android native service keys
   static const String _rulesKey = 'flutter.blocking_rules';
   static const String _focusModesKey = 'flutter.focus_modes';
   static const String _dailyUsageKey = 'flutter.daily_usage_tracking';
   static const String _sessionUsageKey = 'flutter.session_usage_tracking';
   static const String _lastResetDateKey = 'flutter.last_reset_date';
 
-  // In-memory cache
   List<BlockingRule> _rules = [];
   List<FocusMode> _focusModes = [];
   Map<String, Duration> _dailyUsageCache = {};
   Map<String, Duration> _sessionUsageCache = {};
-  Map<String, DateTime> _sessionStartTimes = {};
+  final Map<String, DateTime> _sessionStartTimes = {};
   DateTime? _lastResetDate;
-
-  // Stream controllers for real-time updates
   final StreamController<List<BlockingRule>> _rulesController =
       StreamController.broadcast();
   final StreamController<List<FocusMode>> _focusModesController =
@@ -39,17 +35,13 @@ class AppBlockingService {
   final StreamController<Map<String, AppBlockInfo>> _blockStatusController =
       StreamController.broadcast();
 
-  // Getters for streams
   Stream<List<BlockingRule>> get rulesStream => _rulesController.stream;
   Stream<List<FocusMode>> get focusModesStream => _focusModesController.stream;
   Stream<Map<String, AppBlockInfo>> get blockStatusStream =>
       _blockStatusController.stream;
-
-  // Services
   final AppUsageService _mockUsageService = AppUsageService();
   final RealAppUsageService _realUsageService = RealAppUsageService();
   final UsageHistoryService _historyService = UsageHistoryService();
-
 
   Timer? _periodicTimer;
   Timer? _dailyResetTimer;
@@ -82,7 +74,6 @@ class AppBlockingService {
   }
 
   Future<void> updateRule(BlockingRule updatedRule) async {
-
     final index = _rules.indexWhere((rule) => rule.id == updatedRule.id);
     if (index != -1) {
       _rules[index] = updatedRule.copyWith(updatedAt: DateTime.now());
@@ -93,7 +84,6 @@ class AppBlockingService {
   }
 
   Future<void> deleteRule(String ruleId) async {
-
     _rules.removeWhere((rule) => rule.id == ruleId);
     await _saveRules();
     _rulesController.add(_rules);
@@ -144,7 +134,6 @@ class AppBlockingService {
   }
 
   Future<void> stopFocusMode() async {
-
     for (int i = 0; i < _focusModes.length; i++) {
       if (_focusModes[i].isActive) {
         _focusModes[i] = _focusModes[i].copyWith(isActive: false);
@@ -161,19 +150,14 @@ class AppBlockingService {
     String packageName,
     String appName,
   ) async {
-    // Get current usage
     final dailyUsage = _dailyUsageCache[packageName] ?? Duration.zero;
     final sessionUsage = _sessionUsageCache[packageName] ?? Duration.zero;
-
-    // Check all active rules
     final activeRules = <String>[];
     AppBlockStatus status = AppBlockStatus.allowed;
     String? blockReason;
     Duration? dailyLimit;
     Duration? sessionLimit;
     bool canBypass = false;
-
-    // Check focus mode first
     final activeFocus = activeFocusMode;
     if (activeFocus != null && activeFocus.shouldBlockPackage(packageName)) {
       status = AppBlockStatus.blocked;
@@ -181,8 +165,6 @@ class AppBlockingService {
       canBypass = activeFocus.allowEmergency;
       activeRules.add(activeFocus.id);
     }
-
-    // Check blocking rules
     for (final rule in _rules.where((r) => r.isActive)) {
       if (rule.shouldBlockPackage(packageName)) {
         activeRules.add(rule.id);
@@ -198,21 +180,17 @@ class AppBlockingService {
           case BlockingType.timeLimit:
             dailyLimit = rule.dailyLimit;
             sessionLimit = rule.sessionLimit;
-
-            // Check daily limit
             if (rule.dailyLimit != null && dailyUsage >= rule.dailyLimit!) {
               status = AppBlockStatus.blocked;
               blockReason = 'Daily time limit reached (${rule.name})';
               canBypass = rule.allowEmergencyBypass;
             }
-            // Check session limit
             else if (rule.sessionLimit != null &&
                 sessionUsage >= rule.sessionLimit!) {
               status = AppBlockStatus.blocked;
               blockReason = 'Session time limit reached (${rule.name})';
               canBypass = rule.allowEmergencyBypass;
             }
-            // Check warning threshold
             else if (rule.showUsageWarning && rule.warningThreshold != null) {
               if (dailyUsage >= rule.warningThreshold!) {
                 status = AppBlockStatus.warning;
@@ -222,11 +200,9 @@ class AppBlockingService {
             break;
 
           case BlockingType.focusMode:
-            // Handled above in focus mode check
             break;
         }
 
-        // If already blocked, no need to check further
         if (status == AppBlockStatus.blocked) break;
       }
     }
@@ -245,11 +221,8 @@ class AppBlockingService {
     );
   }
 
-  /// Get block status for all apps
   Future<Map<String, AppBlockInfo>> getAllAppBlockStatus() async {
     final Map<String, AppBlockInfo> result = {};
-
-    // Get app usage data
     List<AppUsageInfo> usageData = [];
     try {
       usageData = await _realUsageService.getTodayUsage();
@@ -259,8 +232,6 @@ class AppBlockingService {
     } catch (e) {
       usageData = await _mockUsageService.getTodayUsage();
     }
-
-    // Check each app
     for (final app in usageData) {
       final blockInfo = await getAppBlockStatus(app.packageName, app.appName);
       result[app.packageName] = blockInfo;
@@ -278,11 +249,8 @@ class AppBlockingService {
     if (startTime != null) {
       final sessionDuration = DateTime.now().difference(startTime);
 
-      // Update session usage
       _sessionUsageCache[packageName] =
           (_sessionUsageCache[packageName] ?? Duration.zero) + sessionDuration;
-
-      // Update daily usage
       _dailyUsageCache[packageName] =
           (_dailyUsageCache[packageName] ?? Duration.zero) + sessionDuration;
 
@@ -323,28 +291,20 @@ class AppBlockingService {
   }
 
   void _startDailyResetScheduler() {
-    // Calculate time until next midnight
     final now = DateTime.now();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final timeUntilMidnight = tomorrow.difference(now);
 
     _dailyResetTimer = Timer(timeUntilMidnight, () {
       _performDailyReset();
-      
-      // Then schedule periodic daily resets every 24 hours
       _dailyResetTimer = Timer.periodic(const Duration(days: 1), (timer) {
         _performDailyReset();
       });
     });
   }
 
-  /// Perform daily reset at midnight
   Future<void> _performDailyReset() async {
-    try {
-      await _historyService.saveTodayUsage();
-    } catch (e) {
-    }
-    
+    await _historyService.saveTodayUsage();
     await resetDailyUsage();
     await _saveLastResetDate(DateTime.now());
     await _updateBlockStatus();
@@ -354,7 +314,6 @@ class AppBlockingService {
     final today = DateTime(now.year, now.month, now.day);
     
     if (_lastResetDate == null) {
-      // First time running, set last reset to today
       await _saveLastResetDate(today);
       return;
     }
@@ -365,7 +324,6 @@ class AppBlockingService {
     }
   }
 
-  /// Load rules from storage
   Future<void> _loadRules() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -420,6 +378,7 @@ class AppBlockingService {
       );
       await prefs.setString(_focusModesKey, focusModesJson);
     } catch (e) {
+      print(e);
     }
   }
 
@@ -427,7 +386,6 @@ class AppBlockingService {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Load daily usage
       final dailyUsageJson = prefs.getString(_dailyUsageKey);
       if (dailyUsageJson != null) {
         final Map<String, dynamic> dailyUsageMap = jsonDecode(dailyUsageJson);
@@ -435,8 +393,6 @@ class AppBlockingService {
           (key, value) => MapEntry(key, Duration(milliseconds: value)),
         );
       }
-
-      // Load session usage
       final sessionUsageJson = prefs.getString(_sessionUsageKey);
       if (sessionUsageJson != null) {
         final Map<String, dynamic> sessionUsageMap = jsonDecode(
@@ -451,7 +407,6 @@ class AppBlockingService {
     }
   }
 
-  /// Save usage tracking data
   Future<void> _saveUsageTracking() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -468,7 +423,6 @@ class AppBlockingService {
     }
   }
 
-  /// Load last reset date
   Future<void> _loadLastResetDate() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -476,28 +430,25 @@ class AppBlockingService {
       
       if (lastResetString != null) {
         _lastResetDate = DateTime.parse(lastResetString);
-        debugPrint('📥 [BLOCKING] Loaded last reset date: ${_lastResetDate}');
       } else {
-        debugPrint('📥 [BLOCKING] No previous reset date found');
+        debugPrint('Không tìm thấy ngày đặt lại trước đó');
       }
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error loading last reset date: $e');
+      debugPrint('Lỗi tải ngày đặt lại lần cuối: $e');
     }
   }
 
-  /// Save last reset date
   Future<void> _saveLastResetDate(DateTime date) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastResetDateKey, date.toIso8601String());
       _lastResetDate = date;
-      debugPrint('💾 [BLOCKING] Saved last reset date: $date');
+      debugPrint('Đã lưu ngày đặt lại lần cuối: $date');
     } catch (e) {
-      debugPrint('❌ [BLOCKING] Error saving last reset date: $e');
+      debugPrint('Lỗi lưu ngày đặt lại lần cuối: $e');
     }
   }
 
-  /// Get default blocking rules
   List<BlockingRule> _getDefaultRules() {
     return [
       BlockingRule(
@@ -506,7 +457,7 @@ class AppBlockingService {
         description: '⏰ 120 minutes daily',
         type: BlockingType.timeLimit,
         targetPackages: [
-          'com.instagram.android',
+          'com.zing.zalo',
           'com.facebook.katana',
           'com.twitter.android',
           'com.tiktok',
@@ -524,7 +475,7 @@ class AppBlockingService {
         description: '📅 every day 20:00-23:59',
         type: BlockingType.schedule,
         targetPackages: [
-          'com.instagram.android',
+          'com.zing.zalo',
           'com.facebook.katana',
           'com.twitter.android',
           'com.tiktok',
@@ -540,7 +491,7 @@ class AppBlockingService {
         description: '📅 weekdays 09:00-17:00',
         type: BlockingType.schedule,
         targetPackages: [
-          'com.instagram.android',
+          'com.zing.zalo',
           'com.facebook.katana',
           'com.twitter.android',
           'com.tiktok',
@@ -558,7 +509,7 @@ class AppBlockingService {
         description: '🌙 all day',
         type: BlockingType.allDayBlock,
         targetPackages: [
-          'com.instagram.android',
+          'com.zing.zalo',
           'com.facebook.katana',
           'com.twitter.android',
         ],

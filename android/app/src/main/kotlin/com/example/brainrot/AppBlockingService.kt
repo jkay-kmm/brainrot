@@ -18,7 +18,7 @@ class AppBlockingService : Service() {
         private const val TAG = "AppBlockingService"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "app_blocking_channel"
-        private const val PREFS_NAME = "flutter.brainrot"
+        private const val PREFS_NAME = "flutter.com.brainrot.nguyentrung"
         private const val KEY_BLOCKING_RULES = "flutter.blocking_rules"
         private const val KEY_FOCUS_MODES = "flutter.focus_modes"
         

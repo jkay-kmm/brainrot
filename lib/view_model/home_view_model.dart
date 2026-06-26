@@ -20,19 +20,15 @@ class HomeViewModel extends ChangeNotifier {
   double _currentScore = 100.0;
   DateTime _lastResetDate = DateTime.now();
 
-  // Cached computed values
   List<AppUsageInfo>? _cachedTopApps;
   Map<String, dynamic>? _cachedUsageStats;
   String? _cachedFormattedUsage;
-
-  // Getters
   List<AppUsageInfo> get appUsageList => _appUsageList;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   Duration get totalUsage => _totalUsage;
   double get currentScore => _currentScore;
 
-  // Get formatted total usage (cached)
   String get formattedTotalUsage {
     if (_cachedFormattedUsage != null) return _cachedFormattedUsage!;
 
@@ -40,34 +36,28 @@ class HomeViewModel extends ChangeNotifier {
     final minutes = _totalUsage.inMinutes.remainder(60);
 
     _cachedFormattedUsage = hours > 0
-        ? '${hours}h ${minutes} m'
-        : '${minutes} m';
+        ? '${hours}h $minutes m'
+        : '$minutes m';
     return _cachedFormattedUsage!;
   }
 
-  // Get top 5 most used apps (cached)
   List<AppUsageInfo> get topApps {
     _cachedTopApps ??= _appUsageService.getTopUsedApps(_appUsageList, limit: 5);
     return _cachedTopApps!;
   }
 
-  // Get usage statistics (cached)
   Map<String, dynamic> get usageStats {
     _cachedUsageStats ??= _appUsageService.getUsageStats(_appUsageList);
     return _cachedUsageStats!;
   }
 
-  // Invalidate caches when data changes
   void _invalidateCaches() {
     _cachedTopApps = null;
     _cachedUsageStats = null;
     _cachedFormattedUsage = null;
   }
 
-  // Check if it's excessive screen time
-  bool get hasExcessiveScreenTime => _totalUsage.inMinutes > 180; // 3 hours
-
-  // Get screen time category
+  bool get hasExcessiveScreenTime => _totalUsage.inMinutes > 180;
   String get screenTimeCategory {
     final minutes = _totalUsage.inMinutes;
     if (minutes < 60) return 'Light';
@@ -76,32 +66,26 @@ class HomeViewModel extends ChangeNotifier {
     return 'Excessive';
   }
 
-  // Calculate brain health score based on current usage
   double calculateBrainHealthScore() {
     final totalMinutes = _totalUsage.inMinutes;
-    final goalMinutes = 120; // 2 hours goal
-
-    // Calculate impacts
+    final goalMinutes = 120;
     double preGoalImpact = 0.0;
     double postGoalImpact = 0.0;
 
     if (totalMinutes <= goalMinutes) {
-      // Under goal - minimal impact
       preGoalImpact =
-          (totalMinutes / goalMinutes) * 10.0; // Max 10 points deduction
+          (totalMinutes / goalMinutes) * 10.0;
     } else {
-      // Over goal - heavy impact
-      preGoalImpact = 10.0; // Full pre-goal impact
+      preGoalImpact = 10.0;
       final excessMinutes = totalMinutes - goalMinutes;
       postGoalImpact =
-          (excessMinutes / 60.0) * 20.0; // 20 points per excess hour
+          (excessMinutes / 60.0) * 20.0;
     }
 
     final totalImpact = preGoalImpact + postGoalImpact;
     return (100 - totalImpact).clamp(0.0, 100.0);
   }
 
-  // Check if need to reset for new day
   Future<void> _checkAndResetForNewDay() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now();
@@ -111,36 +95,27 @@ class HomeViewModel extends ChangeNotifier {
       _lastResetDate = DateTime.parse(lastResetDateString);
     }
 
-    // Check if it's a new day
     if (!_isSameDay(_lastResetDate, today)) {
-      // Reset score to 100 for new day
       _currentScore = 100.0;
       _lastResetDate = today;
-
-      // Save the reset date
       await prefs.setString('last_reset_date', today.toIso8601String());
       await prefs.setDouble('current_score', _currentScore);
 
       notifyListeners();
     } else {
-      // Load saved score for today
       _currentScore = prefs.getDouble('current_score') ?? 100.0;
     }
   }
 
-  // Check if two dates are the same day
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
         date1.month == date2.month &&
         date1.day == date2.day;
   }
 
-  // Save current score and mood state
   Future<void> _saveCurrentScore() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('current_score', _currentScore);
-
-    // Save mood state for today with actual usage time
     await _moodService.saveDailyMood(
       DateTime.now(), 
       _currentScore,
@@ -148,7 +123,6 @@ class HomeViewModel extends ChangeNotifier {
     );
   }
 
-  /// Load icons cho tất cả apps
   Future<void> loadAppIcons() async {
     if (_appUsageList.isEmpty) {
       return;
@@ -158,7 +132,6 @@ class HomeViewModel extends ChangeNotifier {
       final packageNames = _appUsageList.map((app) => app.packageName).toList();
       final iconsMap = await _iconService.getMultipleAppIcons(packageNames);
 
-      // Update apps with icons
       _appUsageList =
           _appUsageList.map((app) {
             final iconBytes = iconsMap[app.packageName];
@@ -166,28 +139,24 @@ class HomeViewModel extends ChangeNotifier {
           }).toList();
       notifyListeners();
     } catch (e) {
-      // Don't throw error, just continue without icons
+      print('Error loading app icons: $e');
     }
   }
 
-  /// Load today's app usage data
   Future<void> loadTodayUsage() async {
     await _loadUsage(() => _appUsageService.getTodayUsage());
   }
 
-  /// Force refresh today's usage data (clears cache)
   Future<void> refreshTodayUsage() async {
     await _loadUsage(() => _appUsageService.refreshTodayUsage());
   }
 
-  /// Load app usage data for a specific date range
   Future<void> loadUsageInRange(DateTime startTime, DateTime endTime) async {
     await _loadUsage(
           () => _appUsageService.getUsageInRange(startTime, endTime),
     );
   }
 
-  /// Generic method to load usage data
   Future<void> _loadUsage(
       Future<List<AppUsageInfo>> Function() loadFunction,
       ) async {
@@ -195,10 +164,7 @@ class HomeViewModel extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      // Check and reset for new day first
       await _checkAndResetForNewDay();
-
-      // Check permission first
       bool hasPermission = await _appUsageService.hasUsagePermission();
       if (!hasPermission) {
         bool granted = await _appUsageService.requestUsagePermission();
@@ -208,30 +174,23 @@ class HomeViewModel extends ChangeNotifier {
         }
       }
 
-      // Load usage data
       final usageList = await loadFunction();
       _appUsageList = usageList;
 
-      // Invalidate caches when data changes
       _invalidateCaches();
 
-      // Load icons after getting usage data
       await loadAppIcons();
-
-      // Calculate total usage
       _totalUsage = Duration.zero;
       for (final app in _appUsageList) {
         _totalUsage += app.usage;
       }
 
-      // Calculate and update current score based on usage
       final newScore = calculateBrainHealthScore();
       if (_currentScore != newScore) {
         _currentScore = newScore;
         await _saveCurrentScore();
       }
 
-      // ✅ Update widget với data mới
       await _updateWidget();
 
       _clearError();
@@ -243,33 +202,23 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Silent refresh - update data without showing loading indicator
   Future<void> silentRefresh() async {
     try {
-      // Check and reset for new day first
       await _checkAndResetForNewDay();
-
-      // Check permission
       bool hasPermission = await _appUsageService.hasUsagePermission();
       if (!hasPermission) return;
 
-      // Load usage data silently
       final usageList = await _appUsageService.getTodayUsage();
       _appUsageList = usageList;
 
-      // Invalidate caches when data changes
       _invalidateCaches();
 
-      // Load icons
       await loadAppIcons();
-
-      // Calculate total usage
       _totalUsage = Duration.zero;
       for (final app in _appUsageList) {
         _totalUsage += app.usage;
       }
 
-      // Calculate and update current score
       final newScore = calculateBrainHealthScore();
       if (_currentScore != newScore) {
         _currentScore = newScore;
@@ -279,16 +228,14 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Silent refresh error: $e');
-      // Don't show error to user on silent refresh
     }
   }
 
-  /// Update home screen widget
   Future<void> _updateWidget() async {
     try {
       await _widgetService.updateWidget(
         todayUsage: _totalUsage,
-        goal: const Duration(hours: 4), // Goal mặc định 4h
+        goal: const Duration(hours: 4),
         score: _currentScore,
       );
     } catch (e) {
@@ -296,12 +243,10 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Refresh current data (force refresh with cache clear)
   Future<void> refresh() async {
     await refreshTodayUsage();
   }
 
-  /// Force reset score to 100 (for testing or manual reset)
   Future<void> forceResetScore() async {
     _currentScore = 100.0;
     _lastResetDate = DateTime.now();
@@ -309,8 +254,6 @@ class HomeViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('last_reset_date', DateTime.now().toIso8601String());
     await prefs.setDouble('current_score', _currentScore);
-
-    // Save mood state for today with reset score and usage
     await _moodService.saveDailyMood(
       DateTime.now(), 
       _currentScore,
@@ -320,7 +263,6 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Helper methods
   void _setLoading(bool loading) {
     if (_isLoading != loading) {
       _isLoading = loading;

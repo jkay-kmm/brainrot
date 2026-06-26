@@ -1,10 +1,6 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+
 
 part of 'daily_usage_history.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class DailyUsageHistoryAdapter extends TypeAdapter<DailyUsageHistory> {
   @override

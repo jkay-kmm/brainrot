@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 enum BlockingType {
-  timeLimit,     // Giới hạn thời gian
-  schedule,      // Chặn theo lịch trình
-  allDayBlock,   // Chặn cả ngày
-  focusMode,     // Chế độ tập trung
+  timeLimit,
+  schedule,
+  allDayBlock,
+  focusMode,
 }
 
 enum RuleStatus {
@@ -18,24 +18,20 @@ class BlockingRule {
   final String name;
   final String description;
   final BlockingType type;
-  final List<String> targetPackages; // Danh sách package names
+  final List<String> targetPackages;
   final RuleStatus status;
   final DateTime createdAt;
   final DateTime? updatedAt;
   
-  // Time limit specific
   final Duration? dailyLimit;
   final Duration? sessionLimit;
   
-  // Schedule specific
   final TimeOfDay? startTime;
   final TimeOfDay? endTime;
-  final List<int>? daysOfWeek; // 1-7 (Monday-Sunday)
+  final List<int>? daysOfWeek;
   
-  // Focus mode specific
   final String? focusModeId;
   
-  // Settings
   final bool allowEmergencyBypass;
   final String? customBlockMessage;
   final bool showUsageWarning;
@@ -62,7 +58,6 @@ class BlockingRule {
     this.warningThreshold,
   });
 
-  // Copy with method
   BlockingRule copyWith({
     String? id,
     String? name,
@@ -105,7 +100,6 @@ class BlockingRule {
     );
   }
 
-  // JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -158,7 +152,6 @@ class BlockingRule {
     );
   }
 
-  // Helper methods
   bool get isActive => status == RuleStatus.active;
   
   bool isApplicableToday() {
@@ -176,10 +169,8 @@ class BlockingRule {
     final endMinutes = endTime!.hour * 60 + endTime!.minute;
     
     if (startMinutes <= endMinutes) {
-      // Same day schedule (e.g., 9:00 - 17:00)
       return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
     } else {
-      // Overnight schedule (e.g., 22:00 - 06:00)
       return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
     }
   }
@@ -196,7 +187,6 @@ class BlockingRule {
         return true;
       case BlockingType.timeLimit:
       case BlockingType.focusMode:
-        // These need additional logic in the service
         return true;
     }
   }
